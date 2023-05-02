@@ -5,20 +5,52 @@ import oracledb
 user = 'SYSTEM'
 password = 'root'
 port = 1521
-service_name = 'XEPDB1'
+service_name = 'XE' # Depending on OS, this could be 'XE' or 'XEPDB1'
 conn_string = "localhost:{port}/{service_name}".format(
     port=port, service_name=service_name)
 app = Flask(__name__)
 data = []
 id = []
 
-# get Job_Ids from Employee Table
+#################################################
+# Main file for connecting database and routing #
+#################################################
+
 connection = oracledb.connect(
     user=user, password=password, dsn=conn_string)
 cur = connection.cursor()
-job_id = cur.execute('select JOB_ID from HR.JOBS')
-for row in job_id:
-    id.append(row[0])
+# Create tables only if they don't alraedy exist
+tables = [("ISER.USERS", "USERID VARCHAR2(20) PRIMARY KEY, USERNAME VARCHAR(20), PASSWORD VARCHAR2(20) NOT NULL, EMAIL VARCHAR2(20) NOT NULL, PHONE VARCHAR2(20) NOT NULL"),
+          ("ISER.ROOMS", "ROOMID VARCHAR2(20) PRIMARY KEY, ROOMNAME VARCHAR2(20) NOT NULL, ROOMTYPE VARCHAR2(20) NOT NULL, CAPACITY VARCHAR2(20) NOT NULL, LOCATION VARCHAR2(20) NOT NULL"),
+          ("ISER.BOOKINGS", "BOOKINGID VARCHAR2(20) PRIMARY KEY, USERID VARCHAR2(20) NOT NULL, ROOMID VARCHAR2(20) NOT NULL, STARTTIME TIMESTAMP NOT NULL, ENDTIME TIMESTAMP NOT NULL, FOREIGN KEY (USERID) REFERENCES ISER.USERS(USERID), FOREIGN KEY (ROOMID) REFERENCES ISER.ROOMS(ROOMID)")]
+
+# loop over the tables and create them if they don't exist
+for table in tables:
+    # execute the PL/SQL block as a string with parameters
+    plsql_block = """
+    declare
+      error_code NUMBER;
+    begin
+      EXECUTE IMMEDIATE '{commandline}';
+    exception
+      when others then
+        error_code := SQLCODE;
+        if(error_code = -955)
+        then
+          dbms_output.put_line('Table {tablename} exists already!'); 
+        else
+          dbms_output.put_line('Unknown error : '||SQLERRM); 
+        end if;
+    end;
+    """.format(commandline='CREATE TABLE {} ({})'.format(table[0], table[1]), tablename=table[0])
+    cur.execute(plsql_block)
+    print("Table {} created successfully".format(table[0]))
+
+
+# commit the changes
+connection.commit()
+
+# close the cursor and connection
 cur.close()
 connection.close()
 
@@ -28,12 +60,12 @@ def home():
     return render_template('home.html')
 
 
-@app.route('/employee_view', methods=['GET', 'POST'])
+@app.route('/user_view', methods=['GET', 'POST'])
 def get_data():
     connection = oracledb.connect(
         user=user, password=password, dsn=conn_string)
     cur = connection.cursor()
-    cur.execute('select * from HR.Employees')
+    cur.execute('select * from ISER.USERS')
     for row in cur:
         data.append({"FirstName": row[1], "LastName": row[2],
                     "Email": row[3], "Phone_Number": row[4], "Salary": row[7]})
@@ -44,7 +76,7 @@ def get_data():
     return render_template('index.html', data=data, job_id=id)
 
 
-@app.route('/jobs_view',methods=['GET'])
+@app.route('/rooms_view',methods=['GET'])
 def update():
     jobs = []
     connection = oracledb.connect(
