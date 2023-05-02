@@ -2,6 +2,11 @@ import datetime
 from flask import Flask, request, render_template
 import oracledb
 # Replace with your actual Oracle database credentials
+
+#################################################
+# MAKE SURE TO CHANGE THESE VALUES TO YOUR OWN! #
+#################################################
+
 user = 'SYSTEM'
 password = 'root'
 port = 1521
