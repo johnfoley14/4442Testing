@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag eoghano4321/flask_image:1.0
+      run: docker build . --file dockerfile --tag eoghano4321/flask_image:1.0
 
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
