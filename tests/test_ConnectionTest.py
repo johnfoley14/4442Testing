@@ -5,7 +5,7 @@ import os
 
 main = sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/source/main.py')))
 
-#from main import connection
+# from main import connection
 
 
 # from src.source import main
