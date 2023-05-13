@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect
 import oracledb
 # Replace with your actual Oracle database credentials
 
@@ -16,6 +16,9 @@ conn_string = "localhost:{port}/{service_name}".format(
 app = Flask(__name__)
 data = []
 id = []
+
+logged_in = False
+logged_in_user = None
 
 #################################################
 # Main file for connecting database and routing #
@@ -81,21 +84,21 @@ def get_data():
     return render_template('index.html', data=data, job_id=id)
 
 
-@app.route('/rooms_view',methods=['GET'])
-def update():
-    jobs = []
-    connection = oracledb.connect(
-        user=user, password=password, dsn=conn_string)
-    cur = connection.cursor()
-    cur.execute('SELECT JOB_ID, JOB_TITLE, MIN_SALARY, MAX_SALARY FROM HR.JOBS')
-    for row in cur:
-        jobs.append({"JID": row[0], "JTitle": row[1],
-                    "minS": row[2], "maxS": row[3]})
-    # Close the cursor and connection
-    cur.close()
-    connection.close()
+@app.route('/room_View',methods=['GET'])
+def rooms():
+    # jobs = []
+    # connection = oracledb.connect(
+    #     user=user, password=password, dsn=conn_string)
+    # cur = connection.cursor()
+    # cur.execute('SELECT JOB_ID, JOB_TITLE, MIN_SALARY, MAX_SALARY FROM HR.JOBS')
+    # for row in cur:
+    #     jobs.append({"JID": row[0], "JTitle": row[1],
+    #                 "minS": row[2], "maxS": row[3]})
+    # # Close the cursor and connection
+    # cur.close()
+    # connection.close()
     # Pass the data to the template to display in the HTML table
-    return render_template('jobs.html', data=jobs)
+    return render_template('room.html')
     #return render_template('about.html')
 
 
@@ -104,9 +107,13 @@ def about():
     return render_template('about.html')
 
 
-@app.route('/Insert_View')
-def insert():
-    return render_template('Insertion.html', job_id=id)
+@app.route('/booking_View')
+def bookings():
+    return render_template('Booking.html')
+
+@app.route('/my_Bookings_View')
+def myBookings():
+    return render_template('myBookings.html')
 
 
 @app.route('/Insertion_data', methods=["GET", "POST"])
@@ -138,9 +145,51 @@ def getjobsData():
     con.close()
     return render_template('after_submit.html')
 
-@app.route('/empty_View')
-def empty():
-    return render_template('empty.html')
+@app.route('/login_View', methods=['GET', 'POST'])
+def login():
+    global logged_in
+    global logged_in_user
+    if not logged_in:
+        error = None
+        error2 = None
+        if request.method == 'POST' and 'Login' in request.form:
+            print("in login")
+            if request.form['username'] != 'admin' or request.form['password'] != 'admin':
+                error = 'Invalid Credentials. Please try again.'
+            else:
+                logged_in = True
+                logged_in_user = request.form['username']
+                return redirect('/')
+        elif request.method == 'POST' and 'SignUp' in request.form:
+            print("in login")
+            if request.form['username'] == 'admin' or request.form['firstname'].lower() == 'admin':
+            # HERE WE NEED TO CHECK IF THE USERNAME, EMAIL AND PHONE NUMBER ALREADY EXISTS IN THE DATABASE
+                error2 = 'This account already exists'
+            if request.form['password'] == 'admin':
+            # HERE WE NEED TO CHECK IF THE USERNAME, EMAIL AND PHONE NUMBER ALREADY EXISTS IN THE DATABASE
+                error2 = 'This password is already used by admin'
+            elif request.form['confpassword'] != request.form['password']:
+            # HERE WE CHECK IF PASSWORD IS NOT CONFIRMED. Could also check if passwords are strong enough
+                error2 = 'Passwords Dont Match'
+                print("Passwords Dont Match")
+            else:
+            # HERE WE NEED TO INSERT THE USERNAME, PASSWORD, FNAME, LNAME, EMAIL AND PHONE NUMBER IN THE DATABASE
+                print("Added user " + request.form['firstname'] + " " + request.form['lastname'] + " with username " + request.form['username'] + "")
+                logged_in = True
+                logged_in_user = request.form['username']
+                return redirect('/')
+        
+        return render_template('login.html',error=error, error2=error2)
+    else:
+        error = None
+        if request.method == 'POST':
+            #if request.form['Log out'] == 'Logout':
+            logged_in = False
+            logged_in_user = None
+            return redirect('/')
+            # else:
+            #     error = 'Invalid Credentials. Please try again.'
+        return render_template('logged_in.html',user=logged_in_user)
 
 @app.route('/insert_jobs_View')
 def jobs_view():
