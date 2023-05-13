@@ -24,6 +24,7 @@ logged_in_user = None
 # Main file for connecting database and routing #
 #################################################
 
+#################################################
 connection = oracledb.connect(
     user=user, password=password, dsn=conn_string)
 cur = connection.cursor()
@@ -35,6 +36,7 @@ tables = [("ISER.USERS", "USERID VARCHAR2(20) PRIMARY KEY, USERNAME VARCHAR(20),
 # loop over the tables and create them if they don't exist
 for table in tables:
     # execute the PL/SQL block as a string with parameters
+    # This could be done better in the same format as the add rooms loop below but I will leave it as is for now and fix it later if we have time
     plsql_block = """
     declare
       error_code NUMBER;
@@ -54,6 +56,33 @@ for table in tables:
     cur.execute(plsql_block)
     print("Table {} created successfully".format(table[0]))
 
+# Create the rooms if they don't already exist
+rooms = [('0', 'Conference Room', 'Meeting', '10', 'East Wing'), 
+         ('1', 'AWS Fellows Room', 'Office', '4', 'North Wing'),
+         ('2', 'TA Lounge', 'Office', '15', 'North Wing'),
+         ('3', 'East Wing Studio', 'Studio', '30', 'East Wing')]
+
+# Loop through all the above-defined rooms and add them to the database if they don't exist
+for room in rooms: 
+    #cur.execute("DELETE FROM ISER.ROOMS WHERE ROOMID = '{}'".format(room[0])) # Uncomment this line to delete all rooms and re-add them
+    
+    sql_command = """
+    INSERT INTO ISER.ROOMS (ROOMID, ROOMNAME, ROOMTYPE, CAPACITY, LOCATION)
+    VALUES (:roomid, :roomname, :roomtype, :capacity, :location)
+    """
+    params = {'roomid': room[0], 'roomname': room[1], 'roomtype': room[2], 'capacity': room[3], 'location': room[4]}
+
+    try: # Try to execute the SQL command
+        cur.execute(sql_command, params)
+    except oracledb.DatabaseError as e: # If it fails, print the error
+        error_code = e.args[0].code
+        if error_code == 955: # If its error 955, the table already exists and should be skipped
+            print(f"Room {room[1]} exists already!")
+        else:
+            print(f"Unknown error: {e}") # If its any other error, print it
+
+    
+    print("Room {} created successfully".format(room[1]))
 
 # commit the changes
 connection.commit()
@@ -61,13 +90,21 @@ connection.commit()
 # close the cursor and connection
 cur.close()
 connection.close()
+#################################################
 
 
+#################################################
+#                    ROUTING                    #
+#################################################
+
+
+# Home page
 @app.route('/')
 def home():
     return render_template('home.html')
 
 
+# This needs to be either removed or add a user page to nav that admin can access
 @app.route('/user_view', methods=['GET', 'POST'])
 def get_data():
     connection = oracledb.connect(
@@ -84,22 +121,24 @@ def get_data():
     return render_template('index.html', data=data, job_id=id)
 
 
+# Page for viewing all the rooms in the database
+# Available to all users with a button to create a booking for that room
+# Need to figure out how to implement that create booking and how to link that with the booking class
 @app.route('/room_View',methods=['GET'])
 def rooms():
-    # jobs = []
-    # connection = oracledb.connect(
-    #     user=user, password=password, dsn=conn_string)
-    # cur = connection.cursor()
-    # cur.execute('SELECT JOB_ID, JOB_TITLE, MIN_SALARY, MAX_SALARY FROM HR.JOBS')
-    # for row in cur:
-    #     jobs.append({"JID": row[0], "JTitle": row[1],
-    #                 "minS": row[2], "maxS": row[3]})
-    # # Close the cursor and connection
-    # cur.close()
-    # connection.close()
+    connection = oracledb.connect(
+        user=user, password=password, dsn=conn_string)
+    cur = connection.cursor()
+    cur.execute('select * from ISER.ROOMS') # Get all the rooms from the database
+    data.clear() # Clear the data list before adding new data so that it doesn't keep appending
+    for row in cur:
+        data.append({"RoomID": row[0], "RoomName": row[1],
+                    "RoomType": row[2], "Capacity": row[3], "Location": row[4]})
+    # Close the cursor and connection
+    cur.close()
+    connection.close()
     # Pass the data to the template to display in the HTML table
-    return render_template('room.html')
-    #return render_template('about.html')
+    return render_template('room.html', data=data)
 
 
 @app.route('/about_View')
