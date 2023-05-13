@@ -1,14 +1,33 @@
+from src.Booking import *
+
 class User:
-    def __init__(self, name, email, password):
+    name = None
+    bookingExists = False
+    phoneNumber = None
+    booking = None
+    def __init__(self, name):
         self.name = name
-        self.email = email
-        self.password = password
-
-    def register(self):
-        print(f"Registering {self.name} with email {self.email} and password {self.password}")
-
-    def login(self):
-        print(f"Logging in as {self.name} with email {self.email} and password {self.password}")
-
-    def book_room(self, room_number):
-        print(f"{self.name} has booked room {room_number}")
+        
+    def setName(self, name):
+        self.name = name
+        
+    def getName(self):
+        return self.name
+    
+    def createBooking(self, name, phoneNumber, day, startTime, endTime, roomNumber, capacity):
+        self.bookingExists = True
+        self.booking = Booking(name, phoneNumber, day, startTime, endTime, roomNumber, capacity)
+        
+    def hasBooking(self):
+        return self.booking
+    
+    def setPhoneNumber(self, number):
+        self.phoneNumber = number
+    
+    def getPhoneNumber(self):
+        return self.phoneNumber
+    
+    def getBookingName(self):
+        return self.booking.getName()
+    
+        
