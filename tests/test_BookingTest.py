@@ -3,7 +3,7 @@ import unittest
 from datetime import datetime
 
 from src.Booking import *
-from src.Driver import *
+from src.User import *
 from src.Room import *
 
 class BookingTest(unittest.TestCase):
@@ -20,7 +20,6 @@ class BookingTest(unittest.TestCase):
     # Test different room instances with different times 
 
     def setUp(self):
-        self.driver = Driver()
 
         # Three different room instances with different room numbers
         # Parameteres for room could be number, priceRateNum and capacity. 
