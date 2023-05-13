@@ -1,7 +1,6 @@
 import unittest
 
 from datetime import datetime
-from Driver import Driver
 from Room import Room
 from Booking import Booking
 
