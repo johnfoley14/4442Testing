@@ -1,14 +1,5 @@
 from unittest import TestCase
 import oracledb
-import sys
-import os
-
-main = sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/source/main.py')))
-
-# from main import connection
-
-
-# from src.source import main
 
 user = 'SYSTEM'
 password = 'root'
@@ -24,7 +15,8 @@ class TestConnection(TestCase):
     #This Test will fail if the database is not running. Make sure your docker image is running before running this test. 
     def test_connection(self):
         try:
-            conn = oracledb.connect('{user}/{pswd}@localhost:{port}/{service_name}'.format(user=user, pswd=password, port=port, service_name=service_name))
+            conn = oracledb.connect(user=user, password=password, dsn=conn_string)
+            #conn = oracledb.connect('{user}/{pswd}@localhost:{port}/{service_name}'.format(user=user, pswd=password, port=port, service_name=service_name))
             print("Connected to Oracle database!")
             conn.close()
             print("Disconnected from Oracle database!")
