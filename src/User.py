@@ -30,4 +30,28 @@ class User:
     def getBookingName(self):
         return self.booking.getName()
     
+    def updateBooking(self, day, startTime, endTime, roomNumber, capacity):
+        if self.bookingExists:
+            self.booking.update(day, startTime, endTime, roomNumber, capacity)
+        else:
+            print("No booking exists to update.")
+
+    def cancelBooking(self):
+        if self.bookingExists:
+            self.booking = None
+            self.bookingExists = False
+        else:
+            print("No booking exists to cancel.")
+            
+    def displayBookingDetails(self):
+        if self.bookingExists:
+            print(f"Name: {self.booking.getName()}")
+            print(f"Phone Number: {self.booking.getPhoneNumber()}")
+            print(f"Day: {self.booking.getDay()}")
+            print(f"Start Time: {self.booking.getStartTime()}")
+            print(f"End Time: {self.booking.getEndTime()}")
+            print(f"Room Number: {self.booking.getRoomNumber()}")
+            print(f"Capacity: {self.booking.getCapacity()}")
+        else:
+            print("No booking exists to display.")
         
