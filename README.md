@@ -8,4 +8,4 @@ docker pull eoghano4321/flask_image
 ```
 And then run the docker image
 
-You may need to change the service name in [[main.py]]
+You may need to change the service name in [[src/main.py]]
