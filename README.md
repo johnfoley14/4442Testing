@@ -7,3 +7,5 @@ To run the program pull the docker image from the docker hub repository using
 docker pull eoghano4321/flask_image
 ```
 And then run the docker image
+
+You may need to change the service name in [[main.py]]
