@@ -23,8 +23,9 @@ class BookingTest(unittest.TestCase):
         self.driver = Driver()
 
         # Three different room instances with different room numbers
-        self.room1 = Room(1, self.driver)
-        self.room2 = Room(2,self.driver)
+        # Parameteres for room could be number, priceRateNum and capacity. 
+        self.room1 = Room(1,self.driver )
+        self.room2 = Room(2, self.driver)
         self.room3 = Room(3, self.driver)
         
         self.booking = Booking('John Doe', 1, self.room1 , self.driver)
