@@ -19,6 +19,7 @@ id = []
 
 logged_in = False
 logged_in_user = None
+logged_in_user_id = None
 
 #################################################
 # Main file for connecting database and routing #
@@ -29,9 +30,9 @@ connection = oracledb.connect(
     user=user, password=password, dsn=conn_string)
 cur = connection.cursor()
 # Create tables only if they don't alraedy exist
-tables = [("ISER.USERS", "USERID VARCHAR2(20) PRIMARY KEY, USERNAME VARCHAR(20), PASSWORD VARCHAR2(20) NOT NULL, EMAIL VARCHAR2(20) NOT NULL, PHONE VARCHAR2(20) NOT NULL"),
-          ("ISER.ROOMS", "ROOMID VARCHAR2(20) PRIMARY KEY, ROOMNAME VARCHAR2(20) NOT NULL, ROOMTYPE VARCHAR2(20) NOT NULL, CAPACITY VARCHAR2(20) NOT NULL, LOCATION VARCHAR2(20) NOT NULL"),
-          ("ISER.BOOKINGS", "BOOKINGID VARCHAR2(20) PRIMARY KEY, USERID VARCHAR2(20) NOT NULL, ROOMID VARCHAR2(20) NOT NULL, STARTTIME TIMESTAMP NOT NULL, ENDTIME TIMESTAMP NOT NULL, FOREIGN KEY (USERID) REFERENCES ISER.USERS(USERID), FOREIGN KEY (ROOMID) REFERENCES ISER.ROOMS(ROOMID)")]
+tables = [("USERS", "USERID VARCHAR2(20) PRIMARY KEY, USERNAME VARCHAR(20), PASSWORD VARCHAR2(20) NOT NULL, EMAIL VARCHAR2(20) NOT NULL, PHONE VARCHAR2(20) NOT NULL"),
+          ("ROOMS", "ROOMID VARCHAR2(20) PRIMARY KEY, ROOMNAME VARCHAR2(20) NOT NULL, ROOMTYPE VARCHAR2(20) NOT NULL, CAPACITY VARCHAR2(20) NOT NULL, LOCATION VARCHAR2(20) NOT NULL"),
+          ("BOOKINGS", "BOOKINGID VARCHAR2(20) PRIMARY KEY, USERID VARCHAR2(20) NOT NULL, ROOMID VARCHAR2(20) NOT NULL, STARTTIME TIMESTAMP NOT NULL, ENDTIME TIMESTAMP NOT NULL, FOREIGN KEY (USERID) REFERENCES USERS(USERID), FOREIGN KEY (ROOMID) REFERENCES ROOMS(ROOMID)")]
 
 # loop over the tables and create them if they don't exist
 for table in tables:
@@ -60,29 +61,39 @@ for table in tables:
 rooms = [('0', 'Conference Room', 'Meeting', '10', 'East Wing'), 
          ('1', 'AWS Fellows Room', 'Office', '4', 'North Wing'),
          ('2', 'TA Lounge', 'Office', '15', 'North Wing'),
-         ('3', 'East Wing Studio', 'Studio', '30', 'East Wing')]
+         ('3', 'East Wing Studio', 'Studio', '30', 'East Wing'),
+         ('4', 'West Wing Studio', 'Studio', '35', 'West Wing')]
 
 # Loop through all the above-defined rooms and add them to the database if they don't exist
 for room in rooms: 
     #cur.execute("DELETE FROM ISER.ROOMS WHERE ROOMID = '{}'".format(room[0])) # Uncomment this line to delete all rooms and re-add them
     
     sql_command = """
-    INSERT INTO ISER.ROOMS (ROOMID, ROOMNAME, ROOMTYPE, CAPACITY, LOCATION)
+    INSERT INTO ROOMS (ROOMID, ROOMNAME, ROOMTYPE, CAPACITY, LOCATION)
     VALUES (:roomid, :roomname, :roomtype, :capacity, :location)
     """
     params = {'roomid': room[0], 'roomname': room[1], 'roomtype': room[2], 'capacity': room[3], 'location': room[4]}
 
     try: # Try to execute the SQL command
         cur.execute(sql_command, params)
+        print("Room {} created successfully".format(room[1]))
     except oracledb.DatabaseError as e: # If it fails, print the error
         error_code = e.args[0].code
-        if error_code == 955: # If its error 955, the table already exists and should be skipped
+        if error_code == 955 or error_code == 1: # If its error 955, the table already exists and should be skipped
             print(f"Room {room[1]} exists already!")
         else:
-            print(f"Unknown error: {e}") # If its any other error, print it
+            print(f"Unknown error: {e}, {error_code}") # If its any other error, print it
 
-    
-    print("Room {} created successfully".format(room[1]))
+# Create the admin if they don't already exist
+try:
+    cur.execute("INSERT INTO USERS (USERID, USERNAME, PASSWORD, EMAIL, PHONE, SALARY) VALUES ('0', 'admin', 'admin', 'admin@email.com', '123456789', '0')")
+    print("Admin created successfully")
+except oracledb.DatabaseError as e:
+    error_code = e.args[0].code
+    if error_code == 955 or error_code == 1:
+        print("Admin exists already!")
+    else:
+        print(f"Unknown error: {e}, {error_code}")
 
 # commit the changes
 connection.commit()
@@ -129,7 +140,7 @@ def rooms():
     connection = oracledb.connect(
         user=user, password=password, dsn=conn_string)
     cur = connection.cursor()
-    cur.execute('select * from ISER.ROOMS') # Get all the rooms from the database
+    cur.execute('select * from ROOMS') # Get all the rooms from the database
     data.clear() # Clear the data list before adding new data so that it doesn't keep appending
     for row in cur:
         data.append({"RoomID": row[0], "RoomName": row[1],
@@ -184,21 +195,41 @@ def getjobsData():
     con.close()
     return render_template('after_submit.html')
 
+
+# Login page that checks if the user is logged in or not
+# If the user is logged in, show the logout button
+# If the user is not logged in, show the login button and the signup button
 @app.route('/login_View', methods=['GET', 'POST'])
 def login():
     global logged_in
     global logged_in_user
+    global logged_in_user_id
+    corr_password = None
+    connection = oracledb.connect(
+        user=user, password=password, dsn=conn_string)
+    cur = connection.cursor()
     if not logged_in:
         error = None
         error2 = None
         if request.method == 'POST' and 'Login' in request.form:
             print("in login")
-            if request.form['username'] != 'admin' or request.form['password'] != 'admin':
-                error = 'Invalid Credentials. Please try again.'
-            else:
-                logged_in = True
-                logged_in_user = request.form['username']
-                return redirect('/')
+            try:
+                corr_password = cur.execute("SELECT PASSWORD FROM ISER.USERS WHERE USERNAME = {}".format(request.form['username']))
+                print(corr_password)
+                if corr_password != request.form['password']:
+                    error = 'Invalid Credentials. Please try again.'
+                    print(error)
+                else:
+                    logged_in = True
+                    logged_in_user = request.form['username']
+                    logged_in_user_id = cur.execute("SELECT USER_ID FROM ISER.USERS WHERE USERNAME = {}".format(logged_in_user))
+                    print(logged_in_user + "   " + logged_in_user_id)
+                    return redirect('/')
+            except:
+                error = 'User does not exist. Please sign up.'
+                print(error)
+            
+            
         elif request.method == 'POST' and 'SignUp' in request.form:
             print("in login")
             if request.form['username'] == 'admin' or request.form['firstname'].lower() == 'admin':
@@ -216,8 +247,11 @@ def login():
                 print("Added user " + request.form['firstname'] + " " + request.form['lastname'] + " with username " + request.form['username'] + "")
                 logged_in = True
                 logged_in_user = request.form['username']
+                logged_in_user_id = int(cur.execute("SELECT MAX(USER_ID) FROM ISER.USERS")+1)
                 return redirect('/')
         
+        cur.close()
+        connection.close()
         return render_template('login.html',error=error, error2=error2)
     else:
         error = None
