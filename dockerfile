@@ -1,5 +1,5 @@
 # Basic dockerfile to run the database
-FROM eoghano4321/flask_image:1.0
+FROM eoghano4321/iser_oracle_db:latest
 
 ENV ORACLE_PASSWORD=root
 ENV ORACLE_SID=XE
