@@ -30,7 +30,6 @@ class User:
     def getBookingName(self):
         return self.booking.getName()
     
-    
     def updateBooking(self, day, startTime, endTime, roomNumber, capacity):
         if self.bookingExists:
             self.booking.update(day, startTime, endTime, roomNumber, capacity)
@@ -55,6 +54,3 @@ class User:
             print(f"Capacity: {self.booking.getCapacity()}")
         else:
             print("No booking exists to display.")
-            
-    
-        

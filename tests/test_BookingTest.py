@@ -3,7 +3,6 @@ import unittest
 from datetime import datetime
 
 from src.Booking import *
-from src.Driver import *
 from src.Room import *
 
 class BookingTest(unittest.TestCase):
@@ -20,14 +19,13 @@ class BookingTest(unittest.TestCase):
     # Test different room instances with different times 
 
     def setUp(self):
-        self.driver = Driver()
 
         # Three different room instances with different room numbers
-        self.room1 = Room(1, self.driver)
-        self.room2 = Room(2,self.driver)
-        self.room3 = Room(3, self.driver)
+        self.room1 = Room(1)
+        self.room2 = Room(2)
+        self.room3 = Room(3)
         
-        self.booking = Booking('John Doe', 1, self.room1 , self.driver)
+        self.booking = Booking('John Doe', 1, self.room1)
 
         # Two different times, one in evening, one during the day. These are the two different timeframes for the different rates
         # We also have a time period where the rooms cannot be booked, during the night. getPrice() should return -1 in these circumstances
