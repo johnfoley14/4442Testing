@@ -86,7 +86,7 @@ for room in rooms:
 
 # Create the admin if they don't already exist
 try:
-    cur.execute("INSERT INTO USERS (USERID, USERNAME, PASSWORD, EMAIL, PHONE, SALARY) VALUES ('0', 'admin', 'admin', 'admin@email.com', '123456789', '0')")
+    cur.execute("INSERT INTO USERS (USERID, USERNAME, PASSWORD, EMAIL, PHONE) VALUES ('0', 'admin', 'admin', 'admin@email.com', '123456789')")
     print("Admin created successfully")
 except oracledb.DatabaseError as e:
     error_code = e.args[0].code
@@ -121,7 +121,7 @@ def get_data():
     connection = oracledb.connect(
         user=user, password=password, dsn=conn_string)
     cur = connection.cursor()
-    cur.execute('select * from ISER.USERS')
+    cur.execute('select * from USERS')
     for row in cur:
         data.append({"FirstName": row[1], "LastName": row[2],
                     "Email": row[3], "Phone_Number": row[4], "Salary": row[7]})
@@ -214,15 +214,16 @@ def login():
         if request.method == 'POST' and 'Login' in request.form:
             print("in login")
             try:
-                corr_password = cur.execute("SELECT PASSWORD FROM ISER.USERS WHERE USERNAME = {}".format(request.form['username']))
-                print(corr_password)
+                cur.execute("SELECT PASSWORD FROM USERS WHERE USERNAME = '{}'".format(request.form['username']))
+                corr_password = cur.fetchone()[0]
                 if corr_password != request.form['password']:
                     error = 'Invalid Credentials. Please try again.'
                     print(error)
                 else:
                     logged_in = True
                     logged_in_user = request.form['username']
-                    logged_in_user_id = cur.execute("SELECT USER_ID FROM ISER.USERS WHERE USERNAME = {}".format(logged_in_user))
+                    cur.execute("SELECT USERID FROM USERS WHERE USERNAME = '{}'".format(logged_in_user))
+                    logged_in_user_id = cur.fetchone()[0]
                     print(logged_in_user + "   " + logged_in_user_id)
                     return redirect('/')
             except:
@@ -232,13 +233,19 @@ def login():
             
         elif request.method == 'POST' and 'SignUp' in request.form:
             print("in login")
-            if request.form['username'] == 'admin' or request.form['firstname'].lower() == 'admin':
+            rows = cur.execute("SELECT USERNAME, PASSWORD FROM USERS")
+            for row in rows:
+                print("AHH")
+                print(row)
+                if row[0] == request.form['username']:
             # HERE WE NEED TO CHECK IF THE USERNAME, EMAIL AND PHONE NUMBER ALREADY EXISTS IN THE DATABASE
-                error2 = 'This account already exists'
-            if request.form['password'] == 'admin':
+                    error2 = 'This account already exists'
+                    return render_template('login.html',error=error, error2=error2)
+                if row[1] == request.form['password']:
             # HERE WE NEED TO CHECK IF THE USERNAME, EMAIL AND PHONE NUMBER ALREADY EXISTS IN THE DATABASE
-                error2 = 'This password is already used by admin'
-            elif request.form['confpassword'] != request.form['password']:
+                    error2 = 'This password is already used by {}'.format(row[0])
+                    return render_template('login.html',error=error, error2=error2)
+            if request.form['confpassword'] != request.form['password']:
             # HERE WE CHECK IF PASSWORD IS NOT CONFIRMED. Could also check if passwords are strong enough
                 error2 = 'Passwords Dont Match'
                 print("Passwords Dont Match")
@@ -247,7 +254,12 @@ def login():
                 print("Added user " + request.form['firstname'] + " " + request.form['lastname'] + " with username " + request.form['username'] + "")
                 logged_in = True
                 logged_in_user = request.form['username']
-                logged_in_user_id = int(cur.execute("SELECT MAX(USER_ID) FROM ISER.USERS")+1)
+                cur.execute("SELECT MAX(USERID) FROM USERS")
+                logged_in_user_id = int(cur.fetchone()[0]) +  1 
+                print(logged_in_user_id)
+                print("INSERT INTO USERS (USERID, USERNAME, PASSWORD, EMAIL, PHONE) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
+                cur.execute("INSERT INTO USERS (USERID, USERNAME, PASSWORD, EMAIL, PHONE) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
+                connection.commit()
                 return redirect('/')
         
         cur.close()
