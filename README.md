@@ -2,17 +2,43 @@
 Software Testing Project for CS4442
 
 ## Setup
-To run the program pull the docker image from the docker hub repository using
-```shell
-docker pull eoghano4321/iser_oracle_db:latest
+Create a postgres server in pgadmin with credentials
 ```
-Navigate to the folder containing the [dockerfile](dockerfile) and run the build command
-```shell
-docker build -t oracle-db-iser
+host: localhost
+database: iser
+user: postgres
+password: root
+port: 5432
 ```
-You can then run the container and expose the ports using the command
-```shell
-docker run -d -p 1521:1521 -p 5500:5500 -e ORACLE_PASSWORD=root oracle-db-iser
-```
+Once this server is running you can launch the flask application by running the main script
+Once running you can go to http://127.0.0.1:5000/ to view the application
 
-You may need to change the service name in [main](src/main.py)
+## Features
+### Login
+- Users can sign up or login
+- Users cannot sign up if their username is taken
+- Users cannot sign up if their passwords don't match
+- Users cannot login if their account doesn't exist
+Tests exist for each of these conditions in the [test_LoginTest](./main/tests/unit_tests/test_LoginTest.py)
+
+### View Rooms
+- Users can see all rooms
+- If logged in they can create a booking
+- Users cannot create a booking if the attendees are higher than the capacity
+- Users cannot create a booking if the times overlap, aren't in order or aren't on the same day
+Tests exist for each of these conditions in the [test_CapacityTest](./main/tests/unit_tests/test_CapacityTest.py) and [test_NoBookingTimes](./main/tests/unit_tests/test_NoBookingTimes.py)
+
+### View Bookings
+- Users can see all active bookings
+
+### View My Bookings
+- If logged in, Users can view all their active Bookings
+- Users can delete their active bookings
+
+## Percentage Contribution
+### Eoghan
+
+### John
+
+### Oisin
+
