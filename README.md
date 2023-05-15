@@ -35,6 +35,11 @@ Tests exist for each of these conditions in the [test_CapacityTest](./main/tests
 - If logged in, Users can view all their active Bookings
 - Users can delete their active bookings
 
+## Coverage Report
+![image](https://github.com/johnfoley14/4442Testing/assets/73548984/851abebb-ad1b-4aac-a9d8-4012d479d2f1)
+The coverage report can be found at [index.html](htmlcov/index.html)
+Due to the nature of our project using a large amount of database calls we couldn't get the statement coverage much higher
+
 ## Percentage Contribution
 ### Eoghan
 
