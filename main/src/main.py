@@ -311,8 +311,8 @@ def login():
                 cur.execute("SELECT MAX(userid) FROM users")
                 logged_in_user_id = int(cur.fetchone()[0]) +  1 
                 print(logged_in_user_id)
-                print("INSERT INTO USERS (USERID, USERNAME, PASSWORD, EMAIL, PHONE) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
-                cur.execute("insert into users (USERID, USERNAME, PASSWORD, EMAIL, PHONE) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
+                print("INSERT INTO USERS (USERID, USERNAME, PASSWORD, EMAIL, PHONENUM) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
+                cur.execute("insert into users (USERID, USERNAME, PASSWORD, EMAIL, PHONENUM) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
                 connection.commit()
                 return redirect('/')
         
