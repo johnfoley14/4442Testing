@@ -1,7 +1,17 @@
+import psycopg2
+from flask import render_template
+
 import sys
 sys.path.insert(0, './')
 
 from main.src.Booking import Booking
+
+conn = None
+host = "localhost"
+database = "postgres"
+user = "postgres"
+password = "root"
+port = 5432
 
 class Room:
 
@@ -17,4 +27,21 @@ class Room:
         if self.isAvailable():# Create a booking for this room
             new_booking = Booking(user_id, self.room_id, start_time, end_time)
             return new_booking
+        
+    def get_all_rooms(self):
+        connection = psycopg2.connect(host= host, database= database, user= user, password=password, port = port)
+        cur = connection.cursor()
+        data = []
+        
+        cur.execute('select * from rooms') # Get all the rooms from the database
+        data.clear() # Clear the data list before adding new data so that it doesn't keep appending
+        for row in cur:
+            data.append({"roomname": row[2],
+                "roomtype": row[3], "capacity": row[1], "location": row[4]})
+    
+        # Close the cursor and connection
+        cur.close()
+        connection.close()
+        
+        return data
 

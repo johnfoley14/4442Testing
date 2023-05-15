@@ -1,11 +1,12 @@
 import datetime
-from flask import Flask, request, render_template, redirect
+from flask import Flask, request, render_template, redirect, make_response
 import psycopg2
 
 import sys
 sys.path.insert(0, './') # Replace '/path/to/main' with the actual path to your main module
 
 from main.src.Booking import Booking
+from main.src.Room import Room
 
 
 conn = None
@@ -131,49 +132,14 @@ def home():
     return render_template('home.html')
 
 
-# This needs to be either removed or add a user page to nav that admin can access
-@app.route('/user_view', methods=['GET', 'POST'])
-def get_data():
-    data = []
-    connection = psycopg2.connect(
-        host= host,
-        database= database,
-        user= user,
-        password=password,
-        port = port)
-    cur = connection.cursor()
-    cur.execute('select * from ISER.USERS')
-    for row in cur:
-        data.append({"FirstName": row[1], "LastName": row[2],
-                    "Email": row[3], "Phone_Number": row[4], "Salary": row[7]})
-    # Close the cursor and connection
-    cur.close()
-    connection.close()
-    # Pass the data to the template to display in the HTML table
-    return render_template('index.html', data=data, job_id=id)
-
 
 # Page for viewing all the rooms in the database
 # Available to all users with a button to create a booking for that room
-# Need to figure out how to implement that create booking and how to link that with the booking class
 @app.route('/room_View',methods=['GET'])
 def rooms():
-    data = []
-    connection = psycopg2.connect(
-        host= host,
-        database= database,
-        user= user,
-        password=password,
-        port = port)
-    cur = connection.cursor()
-    cur.execute('select * from rooms') # Get all the rooms from the database
-    data.clear() # Clear the data list before adding new data so that it doesn't keep appending
-    for row in cur:
-        data.append({"roomname": row[2],
-                    "roomtype": row[3], "capacity": row[1], "location": row[4]})
-    # Close the cursor and connection
-    cur.close()
-    connection.close()
+    room = Room(1,"roomname", "roomtype", 1, "location") # Placeholder room object just to allow us to reference its functions
+    data = room.get_all_rooms()
+    
     # Pass the data to the template to display in the HTML table
     return render_template('room.html', data=data)
 
@@ -181,54 +147,55 @@ def rooms():
 
 @app.route('/booking_View')
 def bookings():
-    global logged_in
-    global logged_in_user_id
-    data = []
-    connection = psycopg2.connect(
-        host= host,
-        database= database,
-        user= user,
-        password=password,
-        port = port)
-    cur = connection.cursor()
-    data.clear()
-    cur.execute('select * from bookings')
-    for row in cur.fetchall():
-        cur.execute('select roomname from rooms where roomid = %s', (row[1],))
-        rname = cur.fetchone()[0]
-        cur.execute('select username from users where userid = %s', (row[2],))
-        uname = cur.fetchone()[0]
-        data.append({"bookingid": str(row[0]), "roomname":rname, "username":uname, "starttime": row[3], "endtime": row[4]})
-    cur.close()
-    connection.close()
+    booking = Booking(1, 1, "2021-05-16", "2021-05-17") # Placeholder booking object just to allow us to reference its functions
+    data = booking.get_all_bookings()
     
     return render_template('Booking.html', data=data)
 
-@app.route('/my_Bookings_View')
+@app.route('/my_Bookings_View', methods=['GET', 'POST'])
 def myBookings():
     global logged_in
     global logged_in_user_id
     data = []
-    data.clear()
-    connection = psycopg2.connect(
-        host= host,
-        database= database,
-        user= user,
-        password=password,
-        port = port)
-    cur = connection.cursor()
-    if logged_in == False:
-        cur.close()
-        connection.close()
-        return render_template('noBookings.html')
-    else:
-        cur.execute('select * from bookings where userid = %s', (logged_in_user_id,))
-        for row in cur.fetchall():
-            cur.execute('select roomname from rooms where roomid = %s', (row[1],))
-            data.append({"bookingid": str(row[0]), "roomname":cur.fetchone()[0], "starttime": row[3], "endtime": row[4]})
-        cur.close()
-        connection.close()
+    if request.method == 'POST':
+        datafromjs = request.form['rowid']
+        print(datafromjs)
+        try:
+            connection = psycopg2.connect(
+                host= host,
+                database= database,
+                user= user,
+                password=password,
+                port = port)
+            cur = connection.cursor()
+            cur.execute('delete from bookings where bookingid = %s', (datafromjs,))
+            connection.commit()
+            cur.close()
+            connection.close()
+        except:
+            print("error")
         return render_template('myBookings.html', data=data)
+    else:
+        data.clear()
+        connection = psycopg2.connect(
+            host= host,
+            database= database,
+            user= user,
+            password=password,
+            port = port)
+        cur = connection.cursor()
+        if logged_in == False:
+            cur.close()
+            connection.close()
+            return render_template('noBookings.html')
+        else:
+            cur.execute('select * from bookings where userid = %s', (logged_in_user_id,))
+            for row in cur.fetchall():
+                cur.execute('select roomname from rooms where roomid = %s', (row[1],))
+                data.append({"bookingid": str(row[0]), "roomname":cur.fetchone()[0], "starttime": row[3], "endtime": row[4]})
+            cur.close()
+            connection.close()
+            return render_template('myBookings.html', data=data)
 
 
 @app.route('/submit_create_booking', methods=['GET', 'POST'])
@@ -260,53 +227,15 @@ def create_booking():
             booking =  Booking(room_id=roomid, user_id=userid, start_time=starttime, end_time=endtime)
             # Add the booking to the database
             
-            # We want to move this block into the booking class
-            # We can then test this using insert and select commands in the database
-            
-            # Need to add column for no. of attendees
             cur.execute('select max(bookingid) from bookings')
             id = int(cur.fetchone()[0]) + 1
-            cur.execute('insert into bookings (bookingid, roomid, userid, starttime, endtime) values (%s, %s, %s, %s, %s)', (id, booking.room_id, booking.user_id, booking.start_time, booking.end_time))
-            connection.commit()
-            cur.close()
-            connection.close()
+            booking.createBooking(id)
+            
+            # Need to add column for no. of attendees
+            
             return redirect('/booking_View')
         else:
-            return render_template('createBooking.html')
-
-@app.route('/Insertion_data', methods=["GET", "POST"])
-def getData():
-    fname = request.form["fname"]
-    lname = request.form["lname"]
-    email = request.form["email"]
-    num = request.form["phone"]
-    job = request.form["job_id"]
-    date = request.form["date"]
-    print(request.form)
-    Name = fname + " " + lname
-    return render_template('data.html', name=Name, Email=email, Number=num, JOB=job, Date=date)
-
-@app.route('/Insert_jobs', methods=["GET", "POST"])
-def getjobsData():
-    id = request.form["id"]
-    title = request.form["title"]
-    min = request.form["min"]
-    max = request.form["max"]
-    con = psycopg2.connect(
-        host= host,
-        database= database,
-        user= user,
-        password=password,
-        port = port)
-    cur = con.cursor()
-    #print("INSERT INTO HR.JOBS(JOB_ID, JOB_TITLE, MIN_SALARY, MAX_SALARY) VALUES (:0, :1, :2,:3)", (id, title,  int(min), int(max)))
-    
-    cur.execute("INSERT INTO HR.JOBS(JOB_ID, JOB_TITLE, MIN_SALARY, MAX_SALARY) VALUES (:0, :1, :2,:3)", 
-                (id, title,  int(min), int(max)))
-    con.commit()
-    cur.close()
-    con.close()
-    return render_template('after_submit.html')
+            return render_template('myBookings.html')
 
 
 # Login page that checks if the user is logged in or not
@@ -389,37 +318,6 @@ def login():
             # else:
             #     error = 'Invalid Credentials. Please try again.'
         return render_template('logged_in.html',user=logged_in_user)
-
-@app.route('/insert_jobs_View')
-def jobs_view():
-    return render_template('Insert_jobs.html')
-
-
-
-@app.route("/submit_form", methods=["GET", "POST"])
-def submit_form():
-    con = psycopg2.connect(
-        host= host,
-        database= database,
-        user= user,
-        password=password,
-        port = port)
-    cur = con.cursor()
-    Id = request.form["id"]
-    fname = request.form["fname"]
-    lname = request.form["lname"]
-    email = request.form["email"]
-    num = request.form["phone"]
-    salary = request.form["salary"]
-    comm = request.form["Commission"]
-    job = request.form["job_id"]
-    date = request.form["date"]
-    date_obj = datetime.datetime.strptime(date, "%Y-%m-%d").date()
-    # Insert the data into the database
-    cur.execute("INSERT INTO HR.Employees (EMPLOYEE_ID,FIRST_NAME, LAST_NAME, EMAIL,PHONE_NUMBER,HIRE_DATE,JOB_ID,SALARY,COMMISSION_PCT,MANAGER_ID,DEPARTMENT_ID) VALUES (:0, :1, :2,:3,:4,:5,:6,:7,:8,:9,:10)", (int(
-        Id), fname, lname, email, num, date_obj, job, int(salary), float(comm), None, None))
-    return render_template('after_submit.html')
-
 
 if __name__ == '__main__':
     app.run()
