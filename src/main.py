@@ -3,8 +3,10 @@ from flask import Flask, request, render_template, redirect
 import psycopg2
 
 app = Flask(__name__)
+import sys
+sys.path.insert(0, './') # Replace '/path/to/main' with the actual path to your main module
 
-from Booking import Booking
+from main.src.Booking import Booking
 
 conn = None
 host = "localhost"
