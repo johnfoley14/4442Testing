@@ -67,4 +67,10 @@ INSERT INTO public.bookings(
 ### John
 
 ### Oisin
-
+25%
+- i made the test_CapacityTest file
+- i made the Room file
+- i attempted to do selenium testing, but was unsuccessful
+- i assisted with designing the test cases we would run
+- i contributed to the planning of the tests before we wrote the functions themselves
+- i helped make the test_BookingTest file
