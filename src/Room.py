@@ -14,3 +14,16 @@ class Room:
         if self.isAvailable():# Create a booking for this room
             new_booking = Booking(user_id, self.room_id, start_time, end_time)
             return new_booking
+        
+    def isAvailable(roomID, startTime, endTime):
+        connection = psycopg2.connect(host= host, database= database, user= user, password=password, port = port)
+        cur = connection.cursor()
+        cur.execute("SELECT * FROM BOOKINGS WHERE room_id = %s AND start_time <= %s AND end_time >= %s",
+                    (roomID, startTime, endTime))
+        conflicting_bookings = cur.fetchall()
+        cur.close()
+        if len(conflicting_bookings) > 0:
+            return False
+        else:
+            return True
+    

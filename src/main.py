@@ -2,11 +2,13 @@ import datetime
 from flask import Flask, request, render_template, redirect
 import psycopg2
 
+app = Flask(__name__)
+
 conn = None
 host = "localhost"
 database = "iser"
 user = "postgres"
-password = ""
+password = "root"
 port = 5432
 
 try:  
@@ -38,8 +40,8 @@ try:
                                 bookingID      int primary key,
                                 roomID    int,
                                 userID    int,
-                                startTime  date,
-                                endTime    date, 
+                                startTime  timestamp,
+                                endTime    timestamp, 
                                 FOREIGN KEY (roomID) REFERENCES Rooms (roomID),
                                 FOREIGN KEY (userID) REFERENCES Users (userID))'''
             
@@ -89,13 +91,14 @@ if conn is not None:
                 
     if count == 0:        
         queryBookings = '''insert into Bookings (bookingid, roomid, userid, starttime, endtime) values (%s, %s, %s, %s, %s)'''
-        entriesBookings = [(1, 0, 1234 ,'2023-05-16', '2023-05-17'),(2, 3, 1234, '2023-05-16', '2023-05-17'), (3, 0, 1235, '2023-05-17', '2023-05-18'),  (4, 1, 1236, '2023-05-18', '2023-05-19')]
+        entriesBookings = [(1, 0, 1234 ,'2023-05-16 10:00:00', '2023-05-17 12:00:00'),(2, 3, 1234, '2023-05-16 13:00:00', '2023-05-17 15:00:00'), (3, 0, 1235, '2023-05-17 13:00:00', '2023-05-18 15:00:00'),  (4, 1, 1236, '2023-05-18 10:00:00', '2023-05-19 12:00:00')]
 
         for record in entriesBookings:
             cur.execute(queryBookings, record)
+    conn.commit()
 
 
-conn.commit()
+
 if conn is not None:
     conn.close()
 

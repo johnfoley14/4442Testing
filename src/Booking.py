@@ -15,7 +15,7 @@ class Booking:
         return self.room.rate * hours
 
     def isAvailable(self):
-        connection = oracledb.connect(user=user, password=password, dsn=conn_string)
+        connection = psycopg2.connect(host= host, database= database, user= user, password=password, port = port)
         # Check if there is a conflicting booking for this room and time
         cur = connection.cursor()
         cur.execute("SELECT * FROM BOOKINGS WHERE room_id = %s AND start_time <= %s AND end_time >= %s",
@@ -26,3 +26,10 @@ class Booking:
             return False
         else:
             return True
+        
+    def bookRoom(self):
+        connection = psycopg2.connect(host= host, database= database, user= user, password=password, port = port)
+        # Check if there is a conflicting booking for this room and time
+        cur = connection.cursor()
+        cur.execute("SELECT * FROM BOOKINGS WHERE room_id = %s AND start_time <= %s AND end_time >= %s",
+                    (self.room_id, self.end_time, self.start_time))

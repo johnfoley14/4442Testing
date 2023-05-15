@@ -48,5 +48,7 @@ class BookingTest(unittest.TestCase):
         # self.assertEqual(self.booking.getPrice(self.nighttime, self.room2.room_number), -1)
         # self.assertEqual(self.booking.getPrice(self.nighttime, self.room3.room_number), -1)
 
+    
+
 if __name__ == '__main__':
     unittest.main()
