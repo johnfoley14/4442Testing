@@ -11,19 +11,17 @@
         <table class="table" id="tbl">
           <thead style="background-color: #070707; color: white">
             <tr>
-              <!--<th scope="col">Room ID</th> -->
               <th scope="col">Booking Name</th>
               <th scope="col">Room Name</th>
               <th scope="col">Start Time</th>
               <th scope="col">End Time</th>
-              <th scope="col">Action</th>
+              <th scope="col">Cancel Booking</th>
             </tr>
           </thead>
           <tbody id="myTable" style="background-color: rgb(235, 240, 245)">
             <!-- first-row -->
             {% for row in data %}
             <tr>
-              <!-- <td>{{ row["RoomID"] }}</td> -->
               <td>{{ row["bookingid"] }}</td>
               <td>{{ row["roomname"] }}</td>
               <td>{{ row["starttime"] }}</td>
@@ -33,21 +31,8 @@
                   class="fa fa-trash-o"
                   aria-hidden="true"
                   style="cursor: pointer"
+                  onclick="deleteBooking({{ row['bookingid'] }})"
                 ></i>
-                <i
-                  class="fa fa-pencil"
-                  aria-hidden="true"
-                  style="cursor: pointer"
-                ></i>
-                <div style="margin-top: -3px">
-                  <i
-                    class="fa fa-plus"
-                    aria-hidden="true"
-                    style="cursor: pointer"
-                    data-bs-toggle="modal"
-                    data-bs-target="#myModal"
-                  ></i>
-                </div>
               </td>
             </tr>
             {% endfor %}
@@ -55,4 +40,17 @@
         </table>
     </div>
   </body>
+  <script>
+    function deleteBooking(rowid){
+      console.log(rowid)
+      var jqXHR = $.ajax({
+        type: "POST",
+        url: "/my_Bookings_View",
+        async: false,
+        data: { rowid: rowid },
+      });
+
+
+    }
+  </script>
 </html>

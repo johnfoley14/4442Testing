@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, request, render_template, redirect
+from flask import Flask, request, render_template, redirect, make_response
 import psycopg2
 
 import sys
@@ -204,31 +204,53 @@ def bookings():
     
     return render_template('Booking.html', data=data)
 
-@app.route('/my_Bookings_View')
+@app.route('/my_Bookings_View', methods=['GET', 'POST'])
 def myBookings():
     global logged_in
     global logged_in_user_id
     data = []
-    data.clear()
-    connection = psycopg2.connect(
-        host= host,
-        database= database,
-        user= user,
-        password=password,
-        port = port)
-    cur = connection.cursor()
-    if logged_in == False:
-        cur.close()
-        connection.close()
-        return render_template('noBookings.html')
-    else:
-        cur.execute('select * from bookings where userid = %s', (logged_in_user_id,))
-        for row in cur.fetchall():
-            cur.execute('select roomname from rooms where roomid = %s', (row[1],))
-            data.append({"bookingid": str(row[0]), "roomname":cur.fetchone()[0], "starttime": row[3], "endtime": row[4]})
-        cur.close()
-        connection.close()
+    if request.method == 'POST':
+        datafromjs = request.form['rowid']
+        print(datafromjs)
+        try:
+            connection = psycopg2.connect(
+                host= host,
+                database= database,
+                user= user,
+                password=password,
+                port = port)
+            cur = connection.cursor()
+            cur.execute('delete from bookings where bookingid = %s', (datafromjs,))
+            connection.commit()
+            cur.close()
+            connection.close()
+        except:
+            print("error")
+        # resp = make_response('{"response": '+datafromjs+'}')
+        # resp.headers['Content-Type'] = "application/json"
+        # return resp
         return render_template('myBookings.html', data=data)
+    else:
+        data.clear()
+        connection = psycopg2.connect(
+            host= host,
+            database= database,
+            user= user,
+            password=password,
+            port = port)
+        cur = connection.cursor()
+        if logged_in == False:
+            cur.close()
+            connection.close()
+            return render_template('noBookings.html')
+        else:
+            cur.execute('select * from bookings where userid = %s', (logged_in_user_id,))
+            for row in cur.fetchall():
+                cur.execute('select roomname from rooms where roomid = %s', (row[1],))
+                data.append({"bookingid": str(row[0]), "roomname":cur.fetchone()[0], "starttime": row[3], "endtime": row[4]})
+            cur.close()
+            connection.close()
+            return render_template('myBookings.html', data=data)
 
 
 @app.route('/submit_create_booking', methods=['GET', 'POST'])
