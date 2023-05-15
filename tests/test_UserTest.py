@@ -1,6 +1,6 @@
 from unittest import TestCase
 import unittest
-from src.User import *
+from src import User
 
 class UserTest(TestCase):
     def test_getName(self):

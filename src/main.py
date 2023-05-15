@@ -178,11 +178,54 @@ def about():
 
 @app.route('/booking_View')
 def bookings():
-    return render_template('Booking.html')
+    global logged_in
+    global logged_in_user_id
+    data = []
+    connection = psycopg2.connect(
+        host= host,
+        database= database,
+        user= user,
+        password=password,
+        port = port)
+    cur = connection.cursor()
+    data.clear()
+    cur.execute('select * from bookings')
+    for row in cur.fetchall():
+        cur.execute('select roomname from rooms where roomid = %s', (row[1],))
+        rname = cur.fetchone()[0]
+        cur.execute('select username from users where userid = %s', (row[2],))
+        uname = cur.fetchone()[0]
+        data.append({"bookingid": str(row[0]), "roomname":rname, "username":uname, "starttime": row[3], "endtime": row[4]})
+    cur.close()
+    connection.close()
+    
+    return render_template('Booking.html', data=data)
 
 @app.route('/my_Bookings_View')
 def myBookings():
-    return render_template('myBookings.html')
+    global logged_in
+    global logged_in_user_id
+    data = []
+    data.clear()
+    connection = psycopg2.connect(
+        host= host,
+        database= database,
+        user= user,
+        password=password,
+        port = port)
+    cur = connection.cursor()
+    if logged_in == False:
+        cur.close()
+        connection.close()
+        return render_template('noBookings.html')
+    else:
+        cur.execute('select * from bookings where userid = %s', (logged_in_user_id,))
+        for row in cur.fetchall():
+            cur.execute('select roomname from rooms where roomid = %s', (row[1],))
+            data.append({"bookingid": str(row[0]), "roomname":cur.fetchone()[0], "starttime": row[3], "endtime": row[4]})
+        cur.close()
+        connection.close()
+        return render_template('myBookings.html', data=data)
 
 
 @app.route('/Insertion_data', methods=["GET", "POST"])
@@ -242,7 +285,7 @@ def login():
         if request.method == 'POST' and 'Login' in request.form:
             print("in login")
             try:
-                cur.execute("select password from users where username = '{}'".format(request.form['username']))
+                cur.execute("select password from users where username = '{}'".format(request.form['username']))#
                 corr_password = cur.fetchone()[0]
                 if corr_password != request.form['password']:
                     error = 'Invalid Credentials. Please try again.'
@@ -252,7 +295,6 @@ def login():
                     logged_in_user = request.form['username']
                     cur.execute("select userid from users where username = '{}'".format(logged_in_user))
                     logged_in_user_id = cur.fetchone()[0]
-                    print(logged_in_user + "   " + logged_in_user_id)
                     return redirect('/')
             except:
                 error = 'User does not exist. Please sign up.'
