@@ -1,7 +1,7 @@
 from datetime import datetime
 import psycopg2
-import os
-#import main
+import sys
+sys.path.insert(0, './')
 
 conn = None
 host="localhost"
