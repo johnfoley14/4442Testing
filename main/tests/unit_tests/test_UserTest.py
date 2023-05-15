@@ -1,6 +1,9 @@
+import sys
+sys.path.insert(0, './')
+
 from unittest import TestCase
 import unittest
-from src import User
+from main.src.User import User
 
 class UserTest(TestCase):
     def test_getName(self):
