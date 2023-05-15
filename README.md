@@ -13,6 +13,11 @@ port: 5432
 Once this server is running you can launch the flask application by running the main script
 Once running you can go to http://127.0.0.1:5000/ to view the application
 
+- To run the tests run the command 
+```shell
+pytest pytest main/tests/unit_tests
+```
+
 ## Features
 ### Login
 - Users can sign up or login
