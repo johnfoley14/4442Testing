@@ -48,13 +48,7 @@ class Booking:
         else:
             return True
         
-    def bookRoom(self):
-        connection = psycopg2.connect(host= host, database= database, user= user, password=password, port = port)
-        # Check if there is a conflicting booking for this room and time
-        cur = connection.cursor()
-        cur.execute("SELECT * FROM BOOKINGS WHERE room_id = %s AND start_time <= %s AND end_time >= %s",
-                    (self.room_id, self.end_time, self.start_time))
-     
+    
     def get_all_bookings(self):
         data = []
         connection = psycopg2.connect(
@@ -77,15 +71,3 @@ class Booking:
         
         return data
         
-    # def isAvailable(self):
-    #     connection = psycopg2.connect(user=user, password=password, dsn=conn_string)
-    #     # Check if there is a conflicting booking for this room and time
-    #     cur = connection.cursor()
-    #     cur.execute("SELECT * FROM BOOKINGS WHERE room_id = %s AND start_time <= %s AND end_time >= %s",
-    #                 (self.room_id, self.end_time, self.start_time))
-    #     conflicting_bookings = cur.fetchall()
-    #     cur.close()
-    #     if len(conflicting_bookings) > 0:
-    #         return False
-    #     else:
-    #         return True
