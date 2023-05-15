@@ -2,10 +2,7 @@ import datetime
 from flask import Flask, request, render_template, redirect
 import psycopg2
 
-import sys
-sys.path.insert(0, './') # Replace '/path/to/main' with the actual path to your main module
-
-from main.src.Booking import Booking
+from Booking import Booking
 
 conn = None
 host = "localhost"
