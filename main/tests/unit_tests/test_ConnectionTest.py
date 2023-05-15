@@ -26,8 +26,3 @@ class TestConnection(TestCase):
         except psycopg2.Error as error:
             print("Failed to connect to postgresql database:", error)
             self.assertTrue(False)
-            
-
-        
-
-
