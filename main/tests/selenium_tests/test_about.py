@@ -2,11 +2,18 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
 
 
-driver = webdriver.Chrome()
+chromedriver_path = "C:\\Users\\johnm\\Downloads\\chromedriver_win32\\chromedriver.exe"
 
-driver.get('http://127.0.0.1:5000') 
+# Create a Service object
+service = Service(chromedriver_path)
+
+# Initialize the WebDriver using the Service object
+driver = webdriver.Chrome(service=service)
+
+driver.get('http://127.0.0.1:5000/booking_View') 
 
 try:
     heading = WebDriverWait(driver, 10).until(
