@@ -6,9 +6,9 @@ conn = None
 host = "localhost"
 database = "iser"
 user = "postgres"
-password = ""
+password = "Uptherebels1."
 port = 5432
-
+app = Flask(__name__)
 try:  
     # Note on with clause: if an error occurs inside the withclause, all transactions will rollback, ie not get completed.
     # It commits all transactions itself hence no need for conn.commit() 
@@ -93,9 +93,10 @@ if conn is not None:
 
         for record in entriesBookings:
             cur.execute(queryBookings, record)
+    
+    conn.commit()
 
 
-conn.commit()
 if conn is not None:
     conn.close()
 

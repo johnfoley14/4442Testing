@@ -9,20 +9,20 @@ conn_string = "localhost:{port}/{service_name}".format(
     port=port, service_name=service_name)
 
 
-import oracledb
+#import oracledb
 
 class TestConnection(TestCase):
-    #This Test will fail if the database is not running. Make sure your docker image is running before running this test. 
+    #This Test will fail if the database is not running.  
     def test_connection(self):
         try:
             conn = oracledb.connect(user=user, password=password, dsn=conn_string)
             #conn = oracledb.connect('{user}/{pswd}@localhost:{port}/{service_name}'.format(user=user, pswd=password, port=port, service_name=service_name))
-            print("Connected to Oracle database!")
+            print("Connected to database!")
             conn.close()
-            print("Disconnected from Oracle database!")
+            print("Disconnected from database!")
             self.assertTrue(True)
         except oracledb.Error as error:
-            print("Failed to connect to Oracle database:", error)
+            print("Failed to connect to database:", error)
             self.assertTrue(False)
             
 
