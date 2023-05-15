@@ -1,106 +1,116 @@
 import datetime
 from flask import Flask, request, render_template, redirect
-import oracledb
-# Replace with your actual Oracle database credentials
+import psycopg2
 
-#################################################
-# MAKE SURE TO CHANGE THESE VALUES TO YOUR OWN! #
-#################################################
-
-user = 'SYSTEM'
-password = 'root'
-port = 1521
-service_name = 'XE' # Depending on OS, this could be 'XE' or 'XEPDB1'
-conn_string = "localhost:{port}/{service_name}".format(
-    port=port, service_name=service_name)
+conn = None
+host = "localhost"
+database = "postgres"
+user = "postgres"
+password = "root"
+port = 5432
 app = Flask(__name__)
-data = []
-id = []
 
 logged_in = False
 logged_in_user = None
 logged_in_user_id = None
 
-#################################################
-# Main file for connecting database and routing #
-#################################################
+try:  
+    # Note on with clause: if an error occurs inside the withclause, all transactions will rollback, ie not get completed.
+    # It commits all transactions itself hence no need for conn.commit() 
+    # The with clause also closes the cursor automatically so we dont need to do this anymore. It does not close the connection
+    with psycopg2.connect(
+        host= host,
+        database= database,
+        user= user,
+        password=password,
+        port = port) as conn:
 
-#################################################
-connection = oracledb.connect(
-    user=user, password=password, dsn=conn_string)
-cur = connection.cursor()
-# Create tables only if they don't alraedy exist
-tables = [("USERS", "USERID VARCHAR2(20) PRIMARY KEY, USERNAME VARCHAR(20), PASSWORD VARCHAR2(20) NOT NULL, EMAIL VARCHAR2(20) NOT NULL, PHONE VARCHAR2(20) NOT NULL"),
-          ("ROOMS", "ROOMID VARCHAR2(20) PRIMARY KEY, ROOMNAME VARCHAR2(20) NOT NULL, ROOMTYPE VARCHAR2(20) NOT NULL, CAPACITY VARCHAR2(20) NOT NULL, LOCATION VARCHAR2(20) NOT NULL"),
-          ("BOOKINGS", "BOOKINGID VARCHAR2(20) PRIMARY KEY, USERID VARCHAR2(20) NOT NULL, ROOMID VARCHAR2(20) NOT NULL, STARTTIME TIMESTAMP NOT NULL, ENDTIME TIMESTAMP NOT NULL, FOREIGN KEY (USERID) REFERENCES USERS(USERID), FOREIGN KEY (ROOMID) REFERENCES ROOMS(ROOMID)")]
+        with conn.cursor() as cur:        
+            create_users_tables = '''CREATE TABLE if not exists Users(
+                                userID      int primary key,
+                                username    varchar(255),
+                                password    varchar(255),
+                                email      varchar(255),
+                                firstName    varchar(255),
+                                lastName    varchar(255),
+                                phoneNum    varchar(255))'''
+            
+            create_rooms_tables = '''CREATE TABLE if not exists Rooms(
+                                roomID      int primary key,
+                                capacity    int,
+                                roomName    varchar(255),
+                                roomType    varchar(255),
+                                location    varchar(255))'''
+            
+            create_bookings_table = '''CREATE TABLE if not exists Bookings(
+                                bookingID      int primary key,
+                                roomID    int,
+                                userID    int,
+                                startTime  date,
+                                endTime    date, 
+                                FOREIGN KEY (roomID) REFERENCES Rooms (roomID),
+                                FOREIGN KEY (userID) REFERENCES Users (userID))'''
+            
+            #get cursor to execute query/script
+            cur.execute(create_rooms_tables)
+            cur.execute(create_users_tables)
+            cur.execute(create_bookings_table)
 
-# loop over the tables and create them if they don't exist
-for table in tables:
-    # execute the PL/SQL block as a string with parameters
-    # This could be done better in the same format as the add rooms loop below but I will leave it as is for now and fix it later if we have time
-    plsql_block = """
-    declare
-      error_code NUMBER;
-    begin
-      EXECUTE IMMEDIATE '{commandline}';
-    exception
-      when others then
-        error_code := SQLCODE;
-        if(error_code = -955)
-        then
-          dbms_output.put_line('Table {tablename} exists already!'); 
-        else
-          dbms_output.put_line('Unknown error : '||SQLERRM); 
-        end if;
-    end;
-    """.format(commandline='CREATE TABLE {} ({})'.format(table[0], table[1]), tablename=table[0])
-    cur.execute(plsql_block)
-    print("Table {} created successfully".format(table[0]))
+#if we fail to connect to the database for some reason, we dont want our program to crash, 
+#we just want an error to occur to notify us of this error
+except Exception as error:
+    print(error)   
 
-# Create the rooms if they don't already exist
-rooms = [('0', 'Conference Room', 'Meeting', '10', 'East Wing'), 
-         ('1', 'AWS Fellows Room', 'Office', '4', 'North Wing'),
-         ('2', 'TA Lounge', 'Office', '15', 'North Wing'),
-         ('3', 'East Wing Studio', 'Studio', '30', 'East Wing'),
-         ('4', 'West Wing Studio', 'Studio', '35', 'West Wing')]
 
-# Loop through all the above-defined rooms and add them to the database if they don't exist
-for room in rooms: 
-    #cur.execute("DELETE FROM ISER.ROOMS WHERE ROOMID = '{}'".format(room[0])) # Uncomment this line to delete all rooms and re-add them
+if conn is not None:
+    print("Connected to the database successfully")
+    cur = conn.cursor()
+        #create a cursor for the database connection
     
-    sql_command = """
-    INSERT INTO ROOMS (ROOMID, ROOMNAME, ROOMTYPE, CAPACITY, LOCATION)
-    VALUES (:roomid, :roomname, :roomtype, :capacity, :location)
-    """
-    params = {'roomid': room[0], 'roomname': room[1], 'roomtype': room[2], 'capacity': room[3], 'location': room[4]}
+    query_check_empty = "SELECT COUNT(*) FROM Rooms"
+    cur.execute(query_check_empty)
+    count = cur.fetchone()[0]    
+                
+    if count == 0:
+        queryRooms = '''insert into rooms(roomID, capacity, roomName, roomType, location) values (%s, %s, %s, %s, %s)'''
+        entriesRooms = [(0, 10, 'Conference Room', 'Meeting', 'East Wing'), 
+                    (1, 4, 'AWS Fellows Room', 'Office', 'North Wing'),
+                    (2, 15, 'TA Lounge', 'Office', 'North Wing'),
+                    (3, 30, 'East Wing Studio', 'Studio', 'East Wing')]
+            
+        for record in entriesRooms:
+            cur.execute(queryRooms, record)
 
-    try: # Try to execute the SQL command
-        cur.execute(sql_command, params)
-        print("Room {} created successfully".format(room[1]))
-    except oracledb.DatabaseError as e: # If it fails, print the error
-        error_code = e.args[0].code
-        if error_code == 955 or error_code == 1: # If its error 955, the table already exists and should be skipped
-            print(f"Room {room[1]} exists already!")
-        else:
-            print(f"Unknown error: {e}, {error_code}") # If its any other error, print it
+    query_check_empty = "SELECT COUNT(*) FROM users"
+    cur.execute(query_check_empty)
+    count = cur.fetchone()[0]    
+                
+    if count == 0:
+        queryUsers = '''insert into users(userID, username, password, email, firstname, lastname, phoneNum) values (%s, %s, %s, %s, %s ,%s, %s)'''
+        entriesUsers = [(0, "admin", "admin", "John", "Doe", "admin@email.com", "12345"), (1, "mary", "pwd", "mary@gmail.com", "Mary", "McCarthy", "12345678"), (2, "BigH", "notrophies", "blockhead@gmail.com", "Harry", "Maguire", "1234567")]
+    
+        for record in entriesUsers:
+            print(record)
+            cur.execute(queryUsers, record)
 
-# Create the admin if they don't already exist
-try:
-    cur.execute("INSERT INTO USERS (USERID, USERNAME, PASSWORD, EMAIL, PHONE, SALARY) VALUES ('0', 'admin', 'admin', 'admin@email.com', '123456789', '0')")
-    print("Admin created successfully")
-except oracledb.DatabaseError as e:
-    error_code = e.args[0].code
-    if error_code == 955 or error_code == 1:
-        print("Admin exists already!")
-    else:
-        print(f"Unknown error: {e}, {error_code}")
+    query_check_empty = "SELECT COUNT(*) FROM bookings"
+    cur.execute(query_check_empty)
+    count = cur.fetchone()[0]    
+                
+    if count == 0:        
+        queryBookings = '''insert into Bookings (bookingid, roomid, userid, starttime, endtime) values (%s, %s, %s, %s, %s)'''
+        entriesBookings = [(1, 0, 0 ,'2023-05-16', '2023-05-17'), (2, 3, 1, '2023-05-16', '2023-05-17'), (3, 0, 2, '2023-05-17', '2023-05-18'),  (4, 1, 0, '2023-05-18', '2023-05-19')]
 
-# commit the changes
-connection.commit()
+        for record in entriesBookings:
+            cur.execute(queryBookings, record)
+    
+    conn.commit()
 
-# close the cursor and connection
-cur.close()
-connection.close()
+
+if conn is not None:
+    conn.commit()
+    conn.close()
+
 #################################################
 
 
@@ -118,8 +128,13 @@ def home():
 # This needs to be either removed or add a user page to nav that admin can access
 @app.route('/user_view', methods=['GET', 'POST'])
 def get_data():
-    connection = oracledb.connect(
-        user=user, password=password, dsn=conn_string)
+    data = []
+    connection = psycopg2.connect(
+        host= host,
+        database= database,
+        user= user,
+        password=password,
+        port = port)
     cur = connection.cursor()
     cur.execute('select * from ISER.USERS')
     for row in cur:
@@ -137,14 +152,19 @@ def get_data():
 # Need to figure out how to implement that create booking and how to link that with the booking class
 @app.route('/room_View',methods=['GET'])
 def rooms():
-    connection = oracledb.connect(
-        user=user, password=password, dsn=conn_string)
+    data = []
+    connection = psycopg2.connect(
+        host= host,
+        database= database,
+        user= user,
+        password=password,
+        port = port)
     cur = connection.cursor()
-    cur.execute('select * from ROOMS') # Get all the rooms from the database
+    cur.execute('select * from rooms') # Get all the rooms from the database
     data.clear() # Clear the data list before adding new data so that it doesn't keep appending
     for row in cur:
-        data.append({"RoomID": row[0], "RoomName": row[1],
-                    "RoomType": row[2], "Capacity": row[3], "Location": row[4]})
+        data.append({"roomid": row[0], "roomname": row[1],
+                    "roomtype": row[2], "capacity": row[3], "location": row[4]})
     # Close the cursor and connection
     cur.close()
     connection.close()
@@ -159,11 +179,54 @@ def about():
 
 @app.route('/booking_View')
 def bookings():
-    return render_template('Booking.html')
+    global logged_in
+    global logged_in_user_id
+    data = []
+    connection = psycopg2.connect(
+        host= host,
+        database= database,
+        user= user,
+        password=password,
+        port = port)
+    cur = connection.cursor()
+    data.clear()
+    cur.execute('select * from bookings')
+    for row in cur.fetchall():
+        cur.execute('select roomname from rooms where roomid = %s', (row[1],))
+        rname = cur.fetchone()[0]
+        cur.execute('select username from users where userid = %s', (row[2],))
+        uname = cur.fetchone()[0]
+        data.append({"bookingid": str(row[0]), "roomname":rname, "username":uname, "starttime": row[3], "endtime": row[4]})
+    cur.close()
+    connection.close()
+    
+    return render_template('Booking.html', data=data)
 
 @app.route('/my_Bookings_View')
 def myBookings():
-    return render_template('myBookings.html')
+    global logged_in
+    global logged_in_user_id
+    data = []
+    data.clear()
+    connection = psycopg2.connect(
+        host= host,
+        database= database,
+        user= user,
+        password=password,
+        port = port)
+    cur = connection.cursor()
+    if logged_in == False:
+        cur.close()
+        connection.close()
+        return render_template('noBookings.html')
+    else:
+        cur.execute('select * from bookings where userid = %s', (logged_in_user_id,))
+        for row in cur.fetchall():
+            cur.execute('select roomname from rooms where roomid = %s', (row[1],))
+            data.append({"bookingid": str(row[0]), "roomname":cur.fetchone()[0], "starttime": row[3], "endtime": row[4]})
+        cur.close()
+        connection.close()
+        return render_template('myBookings.html', data=data)
 
 
 @app.route('/Insertion_data', methods=["GET", "POST"])
@@ -184,7 +247,12 @@ def getjobsData():
     title = request.form["title"]
     min = request.form["min"]
     max = request.form["max"]
-    con = oracledb.connect(user=user, password=password, dsn=conn_string)
+    con = psycopg2.connect(
+        host= host,
+        database= database,
+        user= user,
+        password=password,
+        port = port)
     cur = con.cursor()
     #print("INSERT INTO HR.JOBS(JOB_ID, JOB_TITLE, MIN_SALARY, MAX_SALARY) VALUES (:0, :1, :2,:3)", (id, title,  int(min), int(max)))
     
@@ -205,8 +273,12 @@ def login():
     global logged_in_user
     global logged_in_user_id
     corr_password = None
-    connection = oracledb.connect(
-        user=user, password=password, dsn=conn_string)
+    connection = psycopg2.connect(
+        host= host,
+        database= database,
+        user= user,
+        password=password,
+        port = port)
     cur = connection.cursor()
     if not logged_in:
         error = None
@@ -214,16 +286,16 @@ def login():
         if request.method == 'POST' and 'Login' in request.form:
             print("in login")
             try:
-                corr_password = cur.execute("SELECT PASSWORD FROM ISER.USERS WHERE USERNAME = {}".format(request.form['username']))
-                print(corr_password)
+                cur.execute("select password from users where username = '{}'".format(request.form['username']))#
+                corr_password = cur.fetchone()[0]
                 if corr_password != request.form['password']:
                     error = 'Invalid Credentials. Please try again.'
                     print(error)
                 else:
                     logged_in = True
                     logged_in_user = request.form['username']
-                    logged_in_user_id = cur.execute("SELECT USER_ID FROM ISER.USERS WHERE USERNAME = {}".format(logged_in_user))
-                    print(logged_in_user + "   " + logged_in_user_id)
+                    cur.execute("select userid from users where username = '{}'".format(logged_in_user))
+                    logged_in_user_id = cur.fetchone()[0]
                     return redirect('/')
             except:
                 error = 'User does not exist. Please sign up.'
@@ -232,13 +304,17 @@ def login():
             
         elif request.method == 'POST' and 'SignUp' in request.form:
             print("in login")
-            if request.form['username'] == 'admin' or request.form['firstname'].lower() == 'admin':
+            cur.execute("select username, password from users")
+            for row in cur:
+                if row[0] == request.form['username']:
             # HERE WE NEED TO CHECK IF THE USERNAME, EMAIL AND PHONE NUMBER ALREADY EXISTS IN THE DATABASE
-                error2 = 'This account already exists'
-            if request.form['password'] == 'admin':
+                    error2 = 'This account already exists'
+                    return render_template('login.html',error=error, error2=error2)
+                if row[1] == request.form['password']:
             # HERE WE NEED TO CHECK IF THE USERNAME, EMAIL AND PHONE NUMBER ALREADY EXISTS IN THE DATABASE
-                error2 = 'This password is already used by admin'
-            elif request.form['confpassword'] != request.form['password']:
+                    error2 = 'This password is already used by {}'.format(row[0])
+                    return render_template('login.html',error=error, error2=error2)
+            if request.form['confpassword'] != request.form['password']:
             # HERE WE CHECK IF PASSWORD IS NOT CONFIRMED. Could also check if passwords are strong enough
                 error2 = 'Passwords Dont Match'
                 print("Passwords Dont Match")
@@ -247,7 +323,12 @@ def login():
                 print("Added user " + request.form['firstname'] + " " + request.form['lastname'] + " with username " + request.form['username'] + "")
                 logged_in = True
                 logged_in_user = request.form['username']
-                logged_in_user_id = int(cur.execute("SELECT MAX(USER_ID) FROM ISER.USERS")+1)
+                cur.execute("SELECT MAX(userid) FROM users")
+                logged_in_user_id = int(cur.fetchone()[0]) +  1 
+                print(logged_in_user_id)
+                print("INSERT INTO USERS (USERID, USERNAME, PASSWORD, EMAIL, PHONE) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
+                cur.execute("insert into users (USERID, USERNAME, PASSWORD, EMAIL, PHONE) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
+                connection.commit()
                 return redirect('/')
         
         cur.close()
@@ -272,7 +353,12 @@ def jobs_view():
 
 @app.route("/submit_form", methods=["GET", "POST"])
 def submit_form():
-    con = oracledb.connect(user=user, password=password, dsn=conn_string)
+    con = psycopg2.connect(
+        host= host,
+        database= database,
+        user= user,
+        password=password,
+        port = port)
     cur = con.cursor()
     Id = request.form["id"]
     fname = request.form["fname"]

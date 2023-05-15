@@ -1,4 +1,6 @@
 from datetime import datetime
+
+import oracledb
 from main import *
 
 class Booking:
@@ -8,14 +10,8 @@ class Booking:
         self.start_time = start_time
         self.end_time = end_time
 
-    def getPrice(self):
-        # Calculate the price based on the room rate and duration of booking
-        duration = self.end_time - self.start_time
-        hours = duration.total_seconds() / 3600
-        return self.room.rate * hours
-
     def isAvailable(self):
-        connection = oracledb.connect(user=user, password=password, dsn=conn_string)
+        connection = oracledb.connect(user=user, password=password, dsn=oracledb.LONG_STRING)
         # Check if there is a conflicting booking for this room and time
         cur = connection.cursor()
         cur.execute("SELECT * FROM BOOKINGS WHERE room_id = %s AND start_time <= %s AND end_time >= %s",
