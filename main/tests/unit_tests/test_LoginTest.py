@@ -30,5 +30,15 @@ class TestLogin(unittest.TestCase):
         self.app.post('/login_View', data=dict(username="admin", password="dfghjaddahbhadb", Login="Login"), follow_redirects=True)
         self.assertEqual('Invalid Credentials. Please try again.', main.error)
 
+    def test_signup_with_existing_uname(self):
+        # Test with existing username
+        self.app.post('/login_View', data=dict(username="admin", password="pwd", SignUp="SignUp"), follow_redirects=True)
+        self.assertEqual('This account already exists', main.error2)
+    
+    def test_signup_without_matching_pwd(self):
+        # Test with non matching passwords
+        self.app.post('/login_View', data=dict(username="new_user", password="testingpwd", confpassword="testingpwd2", SignUp="SignUp"), follow_redirects=True)
+        self.assertEqual('Passwords Dont Match', main.error2)
+
 if __name__ == '__main__':
     unittest.main()

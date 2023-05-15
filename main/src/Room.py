@@ -22,11 +22,6 @@ class Room:
         self.capacity = capacity
         self.location = location
 
-
-    def bookRoom(self, user_id, start_time, end_time):
-        if self.isAvailable():# Create a booking for this room
-            new_booking = Booking(user_id, self.room_id, start_time, end_time)
-            return new_booking
         
     def get_all_rooms(self):
         connection = psycopg2.connect(host= host, database= database, user= user, password=password, port = port)
