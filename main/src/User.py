@@ -1,7 +1,4 @@
-import sys
-sys.path.insert(0, './')
-
-from main.src.Booking import *
+from Booking import *
 
 class User:
     name = None
