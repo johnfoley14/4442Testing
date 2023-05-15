@@ -3,12 +3,10 @@ from flask import Flask, request, render_template, redirect, make_response
 import psycopg2
 
 import sys
-sys.path.insert(0, './') # Replace '/path/to/main' with the actual path to your main module
+sys.path.insert(0, './') 
 
 from main.src.Booking import Booking
 from main.src.Room import Room
-
-#from main.src.Booking import Booking
 
 conn = None
 host = "localhost"
@@ -22,6 +20,12 @@ logged_in = False
 logged_in_user = None
 logged_in_user_id = None
 error = None
+error2 = None
+
+
+#################################################
+#                Database Setup                 #
+#################################################
 
 try:  
     # Note on with clause: if an error occurs inside the withclause, all transactions will rollback, ie not get completed.
@@ -148,46 +152,44 @@ def rooms():
     return render_template('room.html', data=data)
 
 
-
+# This is the page for viewing bookings
+# Available to all users to see all the active bookings
 @app.route('/booking_View')
 def bookings():
     booking = Booking(1, 1, "2021-05-16", "2021-05-17", 1) # Placeholder booking object just to allow us to reference its functions
-    data = booking.get_all_bookings()
+    data = booking.get_all_bookings() # Get all the bookings from the database
     
-    return render_template('Booking.html', data=data)
+    return render_template('Booking.html', data=data) # Pass the data to the template to display in the HTML table
 
+
+# This is the page for viewing your bookings
+# Available to all users to see all the bookings they have made once they have logged in
+# Users can delete bookings from this page using the bin icon on the row of the booking they want to delete
 @app.route('/my_Bookings_View', methods=['GET', 'POST'])
 def myBookings():
     global logged_in
     global logged_in_user_id
     data = []
-    if request.method == 'POST':
-        datafromjs = request.form['rowid']
-        print(datafromjs)
-        try:
-            connection = psycopg2.connect(
-                host= host,
-                database= database,
-                user= user,
-                password=password,
-                port = port)
-            cur = connection.cursor()
-            cur.execute('delete from bookings where bookingid = %s', (datafromjs,))
-            connection.commit()
-            cur.close()
-            connection.close()
-        except:
-            print("error")
-        return render_template('myBookings.html', data=data)
-    else:
-        data.clear()
-        connection = psycopg2.connect(
+    connection = psycopg2.connect(
             host= host,
             database= database,
             user= user,
             password=password,
             port = port)
-        cur = connection.cursor()
+    cur = connection.cursor()
+    if request.method == 'POST':
+        datafromjs = request.form['rowid']
+        print(datafromjs)
+        try:
+            cur.execute('delete from bookings where bookingid = %s', (datafromjs,))
+            connection.commit()
+        except:
+            print("error")
+        cur.close()
+        connection.close()
+        return render_template('myBookings.html', data=data)
+    else:
+        data.clear()
         if logged_in == False:
             cur.close()
             connection.close()
@@ -197,11 +199,14 @@ def myBookings():
             for row in cur.fetchall():
                 cur.execute('select roomname from rooms where roomid = %s', (row[1],))
                 data.append({"bookingid": str(row[0]), "roomname":cur.fetchone()[0], "starttime": row[3], "endtime": row[4]})
+            
+            print(logged_in_user_id)
             cur.close()
             connection.close()
             return render_template('myBookings.html', data=data)
 
 
+# Middleman page for creating a booking once the user has submitted the create booking form on the rooms page modal
 @app.route('/submit_create_booking', methods=['GET', 'POST'])
 def create_booking():
     # Here we want to create an instance of the booking class and fill it with the data from the form
@@ -228,19 +233,18 @@ def create_booking():
             endtime = request.form['etime_in']
             cur.execute('select roomid from rooms where roomname = %s', (roomname,))
             roomid = cur.fetchone()[0]
+            
+            # Create the booking object
             booking =  Booking(room_id=roomid, user_id=userid, start_time=starttime, end_time=endtime, attendees=attendees)
             # Add the booking to the database
             
             cur.execute('select max(bookingid) from bookings')
             id = int(cur.fetchone()[0]) + 1
+            cur.close()
+            connection.close()
             if booking.createBooking(id):
-                connection.commit()
-                cur.close()
-                connection.close()
                 return redirect('/booking_View')
             else:
-                cur.close()
-                connection.close()
                 return redirect('/room_View')
             
         else:
@@ -256,6 +260,7 @@ def login():
     global logged_in_user
     global logged_in_user_id
     global error
+    global error2
     corr_password = None
     connection = psycopg2.connect(
         host= host,
@@ -264,17 +269,15 @@ def login():
         password=password,
         port = port)
     cur = connection.cursor()
+    # If the user is not already logged in we display the options to login or sign up and handle the form data for those calls
     if not logged_in:
-        error2 = None
         if request.method == 'POST' and 'Login' in request.form:
             
-            print("in login")
             try:
                 cur.execute("select password from users where username = '{}'".format(request.form['username']))
                 corr_password = cur.fetchone()[0]
                 if corr_password != request.form['password']:
                     error = "Invalid Credentials. Please try again."
-                    print(error)
                 else:
                     logged_in = True
                     logged_in_user = request.form['username']
@@ -284,35 +287,29 @@ def login():
                     return redirect('/')
             except:
                 error = 'User does not exist. Please sign up.'
-                print(error)
             
             
         elif request.method == 'POST' and 'SignUp' in request.form:
-            print("in login")
             cur.execute("select username, password from users")
             for row in cur:
                 if row[0] == request.form['username']:
-            # HERE WE NEED TO CHECK IF THE USERNAME, EMAIL AND PHONE NUMBER ALREADY EXISTS IN THE DATABASE
+            # HERE WE NEED TO CHECK IF THE USERNAME ALREADY EXISTS IN THE DATABASE
                     error2 = 'This account already exists'
                     return render_template('login.html',error=error, error2=error2)
                 if row[1] == request.form['password']:
-            # HERE WE NEED TO CHECK IF THE USERNAME, EMAIL AND PHONE NUMBER ALREADY EXISTS IN THE DATABASE
+            # HERE WE NEED TO CHECK IF THE PASSWORD ALREADY EXISTS IN THE DATABASE
                     error2 = 'This password is already used by {}'.format(row[0])
                     return render_template('login.html',error=error, error2=error2)
             if request.form['confpassword'] != request.form['password']:
-            # HERE WE CHECK IF PASSWORD IS NOT CONFIRMED. Could also check if passwords are strong enough
+            # HERE WE CHECK IF PASSWORD IS NOT CONFIRMED
                 error2 = 'Passwords Dont Match'
-                print("Passwords Dont Match")
             else:
             # HERE WE NEED TO INSERT THE USERNAME, PASSWORD, FNAME, LNAME, EMAIL AND PHONE NUMBER IN THE DATABASE
-                print("Added user " + request.form['firstname'] + " " + request.form['lastname'] + " with username " + request.form['username'] + "")
                 logged_in = True
                 logged_in_user = request.form['username']
                 cur.execute("SELECT MAX(userid) FROM users")
                 logged_in_user_id = int(cur.fetchone()[0]) +  1 
-                print(logged_in_user_id)
-                print("INSERT INTO USERS (USERID, USERNAME, PASSWORD, EMAIL, PHONE) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
-                cur.execute("insert into users (USERID, USERNAME, PASSWORD, EMAIL, PHONE) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
+                cur.execute("insert into users (USERID, USERNAME, PASSWORD, EMAIL, PHONENUM) VALUES ('{}', '{}', '{}', '{}', '{}')".format(logged_in_user_id, logged_in_user, request.form['password'], request.form['email'], request.form['phone']))
                 connection.commit()
                 return redirect('/')
         
@@ -321,15 +318,14 @@ def login():
         connection.close()
         return render_template('login.html',error=error, error2=error2)
     else:
+        # If the user is already logged in we display the logout button and handle the form data for that call
         error = None
         if request.method == 'POST':
-            #if request.form['Log out'] == 'Logout':
             logged_in = False
             logged_in_user = None
             return redirect('/')
-            # else:
-            #     error = 'Invalid Credentials. Please try again.'
         return render_template('logged_in.html',user=logged_in_user)
 
+# Run the flask app
 if __name__ == '__main__':
     app.run()
