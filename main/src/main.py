@@ -14,13 +14,14 @@ conn = None
 host = "localhost"
 database = "postgres"
 user = "postgres"
-password = "Uptherebels1."
+password = "root"
 port = 5432
 app = Flask(__name__)
 
 logged_in = False
 logged_in_user = None
 logged_in_user_id = None
+error = None
 
 try:  
     # Note on with clause: if an error occurs inside the withclause, all transactions will rollback, ie not get completed.
@@ -247,6 +248,7 @@ def login():
     global logged_in
     global logged_in_user
     global logged_in_user_id
+    global error
     corr_password = None
     connection = psycopg2.connect(
         host= host,
@@ -256,21 +258,22 @@ def login():
         port = port)
     cur = connection.cursor()
     if not logged_in:
-        error = None
         error2 = None
         if request.method == 'POST' and 'Login' in request.form:
+            
             print("in login")
             try:
-                cur.execute("select password from users where username = '{}'".format(request.form['username']))#
+                cur.execute("select password from users where username = '{}'".format(request.form['username']))
                 corr_password = cur.fetchone()[0]
                 if corr_password != request.form['password']:
-                    error = 'Invalid Credentials. Please try again.'
+                    error = "Invalid Credentials. Please try again."
                     print(error)
                 else:
                     logged_in = True
                     logged_in_user = request.form['username']
                     cur.execute("select userid from users where username = '{}'".format(logged_in_user))
                     logged_in_user_id = cur.fetchone()[0]
+                    error = "Login successful"
                     return redirect('/')
             except:
                 error = 'User does not exist. Please sign up.'
@@ -306,6 +309,7 @@ def login():
                 connection.commit()
                 return redirect('/')
         
+        print(error)
         cur.close()
         connection.close()
         return render_template('login.html',error=error, error2=error2)
