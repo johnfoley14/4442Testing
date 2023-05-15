@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 
 from Room import *
-from src.Room import Room
+from src import Room
 
 
 

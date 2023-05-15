@@ -12,7 +12,7 @@ conn = None
 host = "localhost"
 database = "postgres"
 user = "postgres"
-password = "root"
+password = "Uptherebels1."
 port = 5432
 app = Flask(__name__)
 
