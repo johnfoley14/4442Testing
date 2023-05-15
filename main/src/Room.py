@@ -1,4 +1,4 @@
-from Booking import *
+from main.src.Booking import Booking
 
 class Room:
 
