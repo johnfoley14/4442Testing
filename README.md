@@ -40,6 +40,27 @@ Tests exist for each of these conditions in the [test_CapacityTest](./main/tests
 The coverage report can be found at [index.html](htmlcov/index.html)
 Due to the nature of our project using a large amount of database calls we couldn't get the statement coverage much higher
 
+## Queries to demonstrate tests fail with invalid entries
+--create entry that has endtime before starttime
+INSERT INTO public.bookings(
+	bookingid, roomid, userid, starttime, endtime)
+	VALUES (3, 0, 0, '2023-05-16 10:00:00', '2023-05-16 9:00:00');
+
+--create entry that spans overnight
+INSERT INTO public.bookings(
+	bookingid, roomid, userid, starttime, endtime)
+	VALUES (6, 0, 0, '2023-05-16 10:00:00', '2023-05-17 12:00:00');
+
+--create entry that is too late, past 9pm
+INSERT INTO public.bookings(
+	bookingid, roomid, userid, starttime, endtime)
+	VALUES (7, 0, 0, '2023-05-16 18:00:00', '2023-05-16 21:00:00');
+
+--create two entries for a single room at an overlapping time
+INSERT INTO public.bookings(
+	bookingid, roomid, userid, starttime, endtime)
+	VALUES (8, 0, 0, '2023-05-16 10:00:00', '2023-05-16 9:00:00');
+
 ## Percentage Contribution
 ### Eoghan
 
