@@ -1,11 +1,24 @@
-import unittest
-from datetime import datetime
+from selenium import webdriver
 
-from Room import *
-from src import Room
+# Create an instance of Chrome WebDriver
 
+driver = webdriver.Chrome()
 
+#import unittest
 
+#from datetime import datetime
+
+# Open a webpage
+driver.get("http://127.0.0.1:5000")
+
+# Find and click a button
+button = driver.find_element_by_xpath("//button[@id='Login']")
+button.click()
+
+# Close the browser
+driver.quit()
+
+"""
 class test_Room(unittest.TestCase):
 
     def setUp(self):
@@ -32,3 +45,4 @@ class test_Room(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+"""

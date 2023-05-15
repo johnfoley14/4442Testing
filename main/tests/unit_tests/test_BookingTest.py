@@ -8,50 +8,73 @@ from main.src.Room import Room
 from main.src.Booking import Booking
 
 
-class BookingTest(unittest.TestCase):
-    booking = None
-    room1 = None
-    room2 = None
-    room3 = None
-    daytime = None
-    eveningtime = None
-    nighttime = None
-    
-    # Create instances of the driver, room, booking and a date. 
-    # Parameters of Booking not known yet, these may be gone back and changed
-    # Test different room instances with different times 
+class test_BookingTest(unittest.TestCase):
 
-    def setUp(self):
+    def test_attendee_capacity():
+        # Create a booking with valid number of attendees
+        booking = Booking(user_id=1, room_id=2, start_time=datetime.now(), end_time=datetime.now(), attendees = 6)
+        booking.createBooking(id)
+        assert booking.isAvailable() == True
 
-        # Three different room instances with different room numbers
-        self.room1 = Room(0, 'Room 1', 'Small', 2, 'Location 1')
-        self.room2 = Room(1, 'Room 2', 'Medium', 4, 'Location 2')
-        self.room3 = Room(2, 'Room 3', 'Large', 6, 'Location 3')
-        
-        self.booking = Booking('John Doe', self.room1.room_id, '2022-05-18', '2022-05-18')
+        # Create a booking with 0 attendees
+        booking = Booking(user_id=1, room_id=2, start_time=datetime.now(), end_time=datetime.now(), attendees=0)
+        booking.createBooking(id)
+        assert booking.isAvailable() == False
 
-        # Two different times, one in evening, one during the day. These are the two different timeframes for the different rates
-        # We also have a time period where the rooms cannot be booked, during the night. getPrice() should return -1 in these circumstances
-        self.daytime = datetime.strptime('2022-05-18 15:00', '%Y-%m-%d %H:%M')
-        self.eveningtime = datetime.strptime('2022-05-18 19:00', '%Y-%m-%d %H:%M')
-        self.nighttime = datetime.strptime('2022-05-18 02:00', '%Y-%m-%d %H:%M')
-        print(self.booking)
-        
+        # Create a booking with negative number of attendees
+        booking = Booking(user_id=1, room_id=2, start_time=datetime.now(), end_time=datetime.now(), attendees=-5)
+        booking.createBooking(id)
+        assert booking.isAvailable() == False
 
 
+    def test_booking_overlap():
+        # Create a booking with non-overlapping time
+        booking1 = Booking(user_id=1, room_id=2, start_time=datetime(2023, 5, 15, 9, 0), end_time=datetime(2023, 5, 15, 10, 0))
+        booking1.createBooking(id)
+        assert booking1.isAvailable() == True
 
-    def test_get_price(self):
-        self.assertEqual(self.booking.getPrice(self.daytime, self.room1.room_id), 100)
-        # self.assertEqual(self.booking.getPrice(self.daytime, self.room2.room_number), 120)
-        # self.assertEqual(self.booking.getPrice(self.daytime, self.room3.room_number), 150)
-        # self.assertEqual(self.booking.getPrice(self.eveningtime, self.room1.room_number), 60)
-        # self.assertEqual(self.booking.getPrice(self.eveningtime, self.room2.room_number), 70)
-        # self.assertEqual(self.booking.getPrice(self.eveningtime, self.room3.room_number), 80)
-        # self.assertEqual(self.booking.getPrice(self.nighttime, self.room1.room_number), -1)
-        # self.assertEqual(self.booking.getPrice(self.nighttime, self.room2.room_number), -1)
-        # self.assertEqual(self.booking.getPrice(self.nighttime, self.room3.room_number), -1)
+        # Create a booking with overlapping time
+        booking2 = Booking(user_id=2, room_id=2, start_time=datetime(2023, 5, 15, 9, 30), end_time=datetime(2023, 5, 15, 10, 30))
+        booking2.createBooking(id)
+        assert booking2.isAvailable() == False
 
-    
+
+
+    def test_booking_duration():
+        # Create a booking with a duration of 1 hour
+        booking1 = Booking(user_id=1, room_id=2, start_time=datetime(2023, 5, 15, 9, 0), end_time=datetime(2023, 5, 15, 10, 0))
+        booking1.createBooking(id)
+        assert booking1.isAvailable() == True
+
+        # Create a booking with a duration of 3 hours(max = 2)
+        booking2 = Booking(user_id=2, room_id=2, start_time=datetime(2023, 5, 15, 10, 0), end_time=datetime(2023, 5, 15, 13, 0))
+        booking2.createBooking(id)
+        assert booking2.isAvailable() == False
+
+        # Create a booking with a duration of 0 hours
+        booking3 = Booking(user_id=3, room_id=2, start_time=datetime(2023, 5, 15, 9, 0), end_time=datetime(2023, 5, 15, 9, 0))
+        booking3.createBooking(id)
+        assert booking3.isAvailable() == False
+
+        # Create a booking with a negative duration
+        booking4 = Booking(user_id=4, room_id=2, start_time=datetime(2023, 5, 15, 10, 0), end_time=datetime(2023, 5, 15, 9, 0))
+        booking4.createBooking(id)
+        assert booking4.isAvailable() == False
+
+
+    def test_room_availability():
+        # Create a booking for a room
+        booking = Booking(user_id=1, room_id=2, start_time=datetime.now(), end_time=datetime.now())
+        booking.createBooking(id)
+        assert booking.isAvailable() == True
+
+        # Try to create another booking for the same room
+        conflicting_booking = Booking(user_id=2, room_id=2, start_time=datetime.now(), end_time=datetime.now())
+        conflicting_booking.createBooking(id)
+        assert conflicting_booking.isAvailable() == False
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
