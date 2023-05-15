@@ -3,6 +3,7 @@ import psycopg2
 import os
 #import main
 
+
 class Booking:
     def __init__(self, user_id, room_id, start_time, end_time):
         self.user_id = user_id
@@ -28,3 +29,4 @@ class Booking:
     #         return False
     #     else:
     #         return True
+

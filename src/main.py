@@ -105,7 +105,8 @@ if conn is not None:
 
         for record in entriesBookings:
             cur.execute(queryBookings, record)
-
+    
+    conn.commit()
 
 
 if conn is not None:
