@@ -54,8 +54,8 @@ try:
                                 bookingID      int primary key,
                                 roomID    int,
                                 userID    int,
-                                startTime  date,
-                                endTime    date, 
+                                startTime  timestamp,
+                                endTime    timestamp, 
                                 FOREIGN KEY (roomID) REFERENCES Rooms (roomID),
                                 FOREIGN KEY (userID) REFERENCES Users (userID))'''
             
@@ -107,7 +107,7 @@ if conn is not None:
                 
     if count == 0:        
         queryBookings = '''insert into Bookings (bookingid, roomid, userid, starttime, endtime) values (%s, %s, %s, %s, %s)'''
-        entriesBookings = [(1, 0, 0 ,'2023-05-16', '2023-05-17'), (2, 3, 1, '2023-05-16', '2023-05-17'), (3, 0, 2, '2023-05-17', '2023-05-18'),  (4, 1, 0, '2023-05-18', '2023-05-19')]
+        entriesBookings = [(1, 0, 0 ,'2023-05-16 10:00:00', '2023-05-16 12:00:00'), (2, 3, 1, '2023-05-16 10:00:00', '2023-05-16 12:00:00'), (3, 0, 2, '2023-05-16 14:00:00', '2023-05-16 16:00:00'),  (4, 1, 0, '2023-05-16 10:00:00', '2023-05-12:00:00')]
 
         for record in entriesBookings:
             cur.execute(queryBookings, record)
