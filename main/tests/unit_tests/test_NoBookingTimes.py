@@ -24,14 +24,30 @@ class BookingTestCase(unittest.TestCase):
         self.connection.close()
 
     def test_starttime_before_endtime(self):
-        # Execute a query to fetch the bookings
+        # Execute a query to fetch the starttime and endtime from bookings and store into array
         self.cursor.execute("SELECT starttime, endtime FROM bookings")
         bookings = self.cursor.fetchall()
 
+        # Make sure the the starttime is less than, ie before the endtime
         for booking in bookings:
             starttime = booking[0]
             endtime = booking[1]
             self.assertLess(starttime, endtime, "starttime is not before endtime")
+
+    def test_starttime_and_endtime_same_day(self):
+        # Execute a query to fetch the starttime and endtime from all the bookings and store them in an array called bookings
+        self.cursor.execute("SELECT starttime, endtime FROM bookings")
+        bookings = self.cursor.fetchall()
+
+        # For every starttime and endtime in bookings
+        for booking in bookings:
+            starttime = booking[0]
+            endtime = booking[1]
+            # Change starttime and endtime to just dates and get rid of the time component
+            # From here on we can compare just the dates to ensure a booking starts and finishes on the same day
+            start_date = starttime.date()
+            end_date = endtime.date()
+            self.assertEqual(start_date, end_date, "starttime and endtime are not on the same day")
 
 if __name__ == '__main__':
     unittest.main()
