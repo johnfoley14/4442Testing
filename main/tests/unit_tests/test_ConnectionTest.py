@@ -3,7 +3,7 @@ import psycopg2
 
 conn = None
 host="localhost"
-database="postgres"
+database="iser"
 user="postgres"
 password="root"
 port = 5432
