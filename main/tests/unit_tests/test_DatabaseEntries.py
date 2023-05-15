@@ -2,7 +2,6 @@
 import unittest
 import psycopg2
 from psycopg2 import sql
-from flask import Flask, request, render_template, redirect
 
 class BookingTestCase(unittest.TestCase):    
 
