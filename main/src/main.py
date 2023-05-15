@@ -8,12 +8,13 @@ sys.path.insert(0, './') # Replace '/path/to/main' with the actual path to your 
 from main.src.Booking import Booking
 from main.src.Room import Room
 
+#from main.src.Booking import Booking
 
 conn = None
 host = "localhost"
 database = "postgres"
 user = "postgres"
-password = "root"
+password = "Uptherebels1."
 port = 5432
 app = Flask(__name__)
 
