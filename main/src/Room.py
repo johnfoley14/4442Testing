@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, './')
+
 from main.src.Booking import Booking
 
 class Room:

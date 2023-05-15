@@ -1,7 +1,8 @@
 import unittest
 
 from datetime import datetime
-
+import sys
+sys.path.insert(0, './')
 
 from main.src.Room import Room
 from main.src.Booking import Booking
