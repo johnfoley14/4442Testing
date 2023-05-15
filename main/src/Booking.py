@@ -12,11 +12,12 @@ port = 5432
 
 
 class Booking:
-    def __init__(self, user_id, room_id, start_time, end_time):
+    def __init__(self, user_id, room_id, start_time, end_time, attendees):
         self.user_id = user_id
         self.room_id = room_id
         self.start_time = start_time
         self.end_time = end_time
+        self.attendees = attendees
 
     
     def createBooking(self, id):
@@ -27,13 +28,19 @@ class Booking:
                 password=password,
                 port = port)
         cur = connection.cursor()
-        
-        cur.execute('select max(bookingid) from bookings')
-        id = int(cur.fetchone()[0]) + 1
-        cur.execute('insert into bookings (bookingid, roomid, userid, starttime, endtime) values (%s, %s, %s, %s, %s)', (id, self.room_id, self.user_id, self.start_time, self.end_time))
-        connection.commit()
-        cur.close()
-        connection.close()
+        cur.execute('select capacity from rooms where roomid = %s', (self.room_id,))
+        if int(cur.fetchone()[0]) < int(self.attendees):
+            return False
+        elif self.attendees < 1:
+            return False
+        else:
+            cur.execute('select max(bookingid) from bookings')
+            id = int(cur.fetchone()[0]) + 1
+            cur.execute('insert into bookings (bookingid, roomid, userid, starttime, endtime) values (%s, %s, %s, %s, %s)', (id, self.room_id, self.user_id, self.start_time, self.end_time))
+            connection.commit()
+            cur.close()
+            connection.close()
+            return True
 
     def isAvailable(self):
         connection = psycopg2.connect(host= host, database= database, user= user, password=password, port = port)
