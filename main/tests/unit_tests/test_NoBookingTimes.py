@@ -49,5 +49,16 @@ class BookingTestCase(unittest.TestCase):
             end_date = endtime.date()
             self.assertEqual(start_date, end_date, "starttime and endtime are not on the same day")
 
+    def test_endtime_before_9pm(self):
+        # Execute a query to fetch the endtime from all the bookings
+        self.cursor.execute("SELECT endtime FROM bookings")
+        endtimes = self.cursor.fetchall()
+
+        # Make sure the endtime of every booking is before 9pm
+        # We test this because the building closes at 9pm and we cannot have booking surpass this time
+        for endtime in endtimes:
+            hour = endtime[0].hour
+            self.assertLess(hour, 21, "endtime is after 9pm")
+
 if __name__ == '__main__':
     unittest.main()
