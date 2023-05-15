@@ -108,7 +108,9 @@ if conn is not None:
                 
     if count == 0:        
         queryBookings = '''insert into Bookings (bookingid, roomid, userid, starttime, endtime) values (%s, %s, %s, %s, %s)'''
+
         entriesBookings = [(1, 0, 0 ,'2023-05-16 10:00:00', '2023-05-16 11:00:00'), (2, 3, 1, '2023-05-16 11:00:00', '2023-05-16 12:00:00'), (3, 0, 2, '2023-05-17 13:00:00', '2023-05-17 14:00:00'),  (4, 1, 0, '2023-05-18 15:00:00', '2023-05-18 16:00:00')]
+
 
         for record in entriesBookings:
             cur.execute(queryBookings, record)
