@@ -10,7 +10,7 @@ port = 5432
 
 
 class TestConnection(TestCase):
-    #This Test will fail if the database is not running. Make sure your docker image is running before running this test. 
+    #This Test will fail if the database is not running. 
     def test_connection(self):
         try:
             conn =psycopg2.connect(

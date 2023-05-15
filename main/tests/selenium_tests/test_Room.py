@@ -4,8 +4,6 @@ from datetime import datetime
 from Room import *
 from src.Room import Room
 
-
-
 class test_Room(unittest.TestCase):
 
     def setUp(self):

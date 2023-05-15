@@ -3,16 +3,15 @@ from flask import Flask, request, render_template, redirect, make_response
 import psycopg2
 
 import sys
-sys.path.insert(0, './') # Replace '/path/to/main' with the actual path to your main module
+sys.path.insert(0, '/C:/Users/oisin/VS Code/4442Testing/main/src') # Replace '/path/to/main' with the actual path to your main module
 
-from main.src.Booking import Booking
-
+#from main.src.Booking import Booking
 
 conn = None
 host = "localhost"
 database = "postgres"
 user = "postgres"
-password = "root"
+password = "Uptherebels1."
 port = 5432
 app = Flask(__name__)
 
