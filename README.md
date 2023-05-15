@@ -62,15 +62,31 @@ INSERT INTO public.bookings(
 	VALUES (8, 0, 0, '2023-05-16 10:00:00', '2023-05-16 9:00:00');
 
 ## Percentage Contribution
+Our project was done in group sessions using pair programming techniques as well as remote work done using version control on git
 ### Eoghan
+33%
+- i made the html and database calls for the webpages
+- i made the create and delete bookings options
+- i made the login and signup functionality
+- i made the tests for login and signup
+- i helped make the test_CapacityTest file
 
 ### John
+33%
+- i set up the postgres database
+- test cases to ensure booking cannot be beyond a certain hour
+- test cases to make sure bookings cannot extemd for multiple days
+- test cases to make sure starttime is before endtime
+- Sample queries to add data to database in main.py
+- test case to ensure one room cannot be booked at the same time twice 
 
 ### Oisin
-25%
+33%
 - i made the test_CapacityTest file
 - i made the Room file
 - i attempted to do selenium testing, but was unsuccessful
 - i assisted with designing the test cases we would run
 - i contributed to the planning of the tests before we wrote the functions themselves
 - i helped make the test_BookingTest file
+- i assisted making the database
+- i helped make the login page
