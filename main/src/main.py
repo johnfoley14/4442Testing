@@ -55,8 +55,8 @@ try:
                                 bookingID      int primary key,
                                 roomID    int,
                                 userID    int,
-                                startTime  date,
-                                endTime    date, 
+                                startTime  timestamp,
+                                endTime    timestamp, 
                                 FOREIGN KEY (roomID) REFERENCES Rooms (roomID),
                                 FOREIGN KEY (userID) REFERENCES Users (userID))'''
             
