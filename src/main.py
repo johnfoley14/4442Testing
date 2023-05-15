@@ -2,11 +2,9 @@ import datetime
 from flask import Flask, request, render_template, redirect
 import psycopg2
 
-<<<<<<< HEAD
 app = Flask(__name__)
-=======
+
 from Booking import Booking
->>>>>>> bc6d5593450aa336941d7660286c17ae49f7db15
 
 conn = None
 host = "localhost"
@@ -105,21 +103,13 @@ if conn is not None:
                 
     if count == 0:        
         queryBookings = '''insert into Bookings (bookingid, roomid, userid, starttime, endtime) values (%s, %s, %s, %s, %s)'''
-<<<<<<< HEAD
+
         entriesBookings = [(1, 0, 1234 ,'2023-05-16 10:00:00', '2023-05-17 12:00:00'),(2, 3, 1234, '2023-05-16 13:00:00', '2023-05-17 15:00:00'), (3, 0, 1235, '2023-05-17 13:00:00', '2023-05-18 15:00:00'),  (4, 1, 1236, '2023-05-18 10:00:00', '2023-05-19 12:00:00')]
 
         for record in entriesBookings:
             cur.execute(queryBookings, record)
     conn.commit()
 
-=======
-        entriesBookings = [(1, 0, 0 ,'2023-05-16', '2023-05-17'), (2, 3, 1, '2023-05-16', '2023-05-17'), (3, 0, 2, '2023-05-17', '2023-05-18'),  (4, 1, 0, '2023-05-18', '2023-05-19')]
-
-        for record in entriesBookings:
-            cur.execute(queryBookings, record)
-    
-    conn.commit()
->>>>>>> bc6d5593450aa336941d7660286c17ae49f7db15
 
 
 if conn is not None:
