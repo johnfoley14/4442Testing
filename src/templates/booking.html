@@ -1,14 +1,60 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Room Booking System - Bookings</title>
+    <title>Room Booking System - All Bookings</title>
     {% include 'nav.html' %}
   </head>
 
   <body>
     <div>
-
-      this is an empty Bookings page
+      <div id="table">
+        <table class="table" id="tbl">
+          <thead style="background-color: #070707; color: white">
+            <tr>
+              <!--<th scope="col">Room ID</th> -->
+              <th scope="col">Booking Name</th>
+              <th scope="col">Room Name</th>
+              <th scope="col">User Name</th>
+              <th scope="col">Start Time</th>
+              <th scope="col">End Time</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody id="myTable" style="background-color: rgb(235, 240, 245)">
+            <!-- first-row -->
+            {% for row in data %}
+            <tr>
+              <!-- <td>{{ row["RoomID"] }}</td> -->
+              <td>{{ row["bookingid"] }}</td>
+              <td>{{ row["roomname"] }}</td>
+              <td>{{ row["username"] }}</td>
+              <td>{{ row["starttime"] }}</td>
+              <td>{{ row["endtime"] }}</td>
+              <td style="display: flex; gap: 10px">
+                <i
+                  class="fa fa-trash-o"
+                  aria-hidden="true"
+                  style="cursor: pointer"
+                ></i>
+                <i
+                  class="fa fa-pencil"
+                  aria-hidden="true"
+                  style="cursor: pointer"
+                ></i>
+                <div style="margin-top: -3px">
+                  <i
+                    class="fa fa-plus"
+                    aria-hidden="true"
+                    style="cursor: pointer"
+                    data-bs-toggle="modal"
+                    data-bs-target="#myModal"
+                  ></i>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
     </div>
   </body>
 </html>

@@ -54,4 +54,3 @@ class User:
             print(f"Capacity: {self.booking.getCapacity()}")
         else:
             print("No booking exists to display.")
-        

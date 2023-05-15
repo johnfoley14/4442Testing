@@ -14,6 +14,7 @@ class Room:
         if self.isAvailable():# Create a booking for this room
             new_booking = Booking(user_id, self.room_id, start_time, end_time)
             return new_booking
+<<<<<<< HEAD
         
     def isAvailable(roomID, startTime, endTime):
         connection = psycopg2.connect(host= host, database= database, user= user, password=password, port = port)
@@ -27,3 +28,5 @@ class Room:
         else:
             return True
     
+=======
+>>>>>>> bc6d5593450aa336941d7660286c17ae49f7db15

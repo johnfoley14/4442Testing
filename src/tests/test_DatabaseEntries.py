@@ -14,15 +14,13 @@ password="root"
 port = 5432
 
 try:
-    with psycopg2.connect(
+    conn = psycopg2.connect(
         host= host,
         database= database,
         user= user,
         password=password,
-        port = port) as conn:
+        port = port)
 
-        with conn.cursor() as cur:  
-            hello = 'Hello'
              
 except Exception as error:
     print(error) 

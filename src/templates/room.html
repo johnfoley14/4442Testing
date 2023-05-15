@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <html>
+  <style>
+    #mod_title{
+      font-weight: bold;
+      -webkit-text-fill-color: darkslategray;
+    }
+    #name_in{
+      visibility: hidden;
+    }
+  </style>
   <head>
     <title>Room Booking System - Rooms</title>
     {% include 'nav.html' %}
@@ -17,7 +26,7 @@
               <th scope="col">Room Type</th>
               <th scope="col">Capacity</th>
               <th scope="col">Location</th>
-              <th scope="col">Action</th>
+              <th scope="col">Create Booking</th>
             </tr>
           </thead>
           <tbody id="myTable" style="background-color: rgb(235, 240, 245)">
@@ -25,28 +34,17 @@
             {% for row in data %}
             <tr>
               <!-- <td>{{ row["RoomID"] }}</td> -->
-              <td>{{ row["RoomName"] }}</td>
-              <td>{{ row["RoomType"] }}</td>
-              <td>{{ row["Capacity"] }}</td>
-              <td>{{ row["Location"] }}</td>
+              <td>{{ row["roomname"] }}</td>
+              <td>{{ row["roomtype"] }}</td>
+              <td>{{ row["capacity"] }}</td>
+              <td>{{ row["location"] }}</td>
               <td style="display: flex; gap: 10px">
-                <i
-                  class="fa fa-trash-o"
-                  aria-hidden="true"
-                  style="cursor: pointer"
-                ></i>
-                <i
-                  class="fa fa-pencil"
-                  aria-hidden="true"
-                  style="cursor: pointer"
-                ></i>
                 <div style="margin-top: -3px">
                   <i
                     class="fa fa-plus"
                     aria-hidden="true"
                     style="cursor: pointer"
-                    data-bs-toggle="modal"
-                    data-bs-target="#myModal"
+                    onclick= "updateRow(this.parentNode.parentNode.parentNode)"
                   ></i>
                 </div>
               </td>
@@ -54,6 +52,158 @@
             {% endfor %}
           </tbody>
         </table>
+          <!-- Modal Insert -->
+          <div
+          class="modal fade"
+          id="myModal"
+          tabindex="-1"
+          aria-labelledby="exampleModalLabel"
+          aria-hidden="true"
+          > 
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header" style="background-color: black">
+                  <button
+                    style="background-color: rgb(223, 221, 220)"
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                  ></button>
+                </div>
+                <div class="modal-body">
+                  <form action="/submit_create_booking" method="POST">
+                    <div
+                      class="form-row"
+                      style="
+                        display: flex;
+                        gap: 2rem;
+                        margin-left: 10%;
+                        margin-right: 10%;
+                        margin-bottom: 15px;
+                      "
+                    >
+                      <div class="form-group col-md-6">
+                        <label for="name" id="mod_title">Room Name</label><br>
+                        <label id="name_label"></label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="name_in"
+                          name="name_in"
+                          value=""
+                          placeholder="ID"
+                          style="box-shadow: none"
+                        />
+                      </div>
+                      <div class="form-group col-md-6">
+                        <label for="cap" id="mod_title">Capacity</label><br>
+                        <label id="cap_label"></label>
+                      </div>
+                    </div>
+                    <div
+                      class="form-row"
+                      style="
+                        display: flex;
+                        gap: 2rem;
+                        margin-left: 10%;
+                        margin-right: 10%;
+                        margin-bottom: 15px;
+                      "
+                    >
+                      
+                      <div class="form-group col-md-6">
+                        <label for="rtype" id="mod_title">Room Type</label><br>
+                        <label id="rtype_label"></label>
+                      </div>
+                      <div class="form-group col-md-6">
+                        <label for="atts" id="mod_title">Attendees</label><br>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="atts_in"
+                          name="atts_in"
+                          placeholder="0"
+                          style="box-shadow: none"
+                        />
+                      </div>
+                      
+                    </div>
+                    <div
+                      class="form-row"
+                      style="
+                        display: flex;
+                        gap: 2rem;
+                        margin-left: 10%;
+                        margin-right: 10%;
+                        margin-bottom: 15px;
+                      "
+                    >
+                      <div class="form-group col-md-6">
+                        <label for="stime" id="mod_title">Start Time</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="stime_in"
+                          name="stime_in"
+                          placeholder="13:00"
+                          style="box-shadow: none"
+                        />
+                      </div>
+                      <div class="form-group col-md-6">
+                        <label for="etime" id="mod_title">End Time</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="etime_in"
+                          name="etime_in"
+                          placeholder="14:00"
+                          style="box-shadow: none"
+                        />
+                      </div>
+                    </div>
+                    <div style="margin-right: 6%; margin-bottom: 10px">
+                      <button
+                        type="submit"
+                        class="btn btn-dark btn-sm"
+                        data-dismiss="modal"
+                        style="float: right"
+                      >
+                        Create Booking
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
     </div>
+    <script>
+      function updateRow(_row){
+        let rows= [];
+        console.log(_row)
+        rows = _row.querySelectorAll('td');
+        
+        console.log(rows);
+        var rname = rows[0].textContent;
+        var rtype = rows[1].textContent;
+        var rcapacity = rows[2].textContent;
+        var rlocation = rows[3].textContent;
+
+
+        const name = document.getElementById("name_label");
+        name.innerHTML = rname;
+        const r_name = document.getElementById("name_in");
+        r_name.placeholder = rname;
+        r_name.value = rname;
+        const capacity = document.getElementById("cap_label");
+        capacity.innerHTML = rcapacity;
+        const r_type = document.getElementById("rtype_label");
+        r_type.innerHTML = rtype;
+        
+
+        $('#myModal').modal('show');
+      }
+    </script>
   </body>
 </html>

@@ -6,7 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 driver = webdriver.Chrome()
 
-driver.get('file:///C:/Users/johnm/Documents/repo/ISEmodules/CS4442/SoftwareTestingProject/4442Testing/src/templates/about.html') 
+driver.get('http://127.0.0.1:5000') 
 
 try:
     heading = WebDriverWait(driver, 10).until(
