@@ -12,7 +12,7 @@ from main.src.Room import Room
 
 conn = None
 host = "localhost"
-database = "postgres"
+database = "iser"
 user = "postgres"
 password = "root"
 port = 5432
@@ -55,8 +55,8 @@ try:
                                 bookingID      int primary key,
                                 roomID    int,
                                 userID    int,
-                                startTime  date,
-                                endTime    date, 
+                                startTime  timestamp,
+                                endTime    timestamp, 
                                 FOREIGN KEY (roomID) REFERENCES Rooms (roomID),
                                 FOREIGN KEY (userID) REFERENCES Users (userID))'''
             
@@ -108,7 +108,7 @@ if conn is not None:
                 
     if count == 0:        
         queryBookings = '''insert into Bookings (bookingid, roomid, userid, starttime, endtime) values (%s, %s, %s, %s, %s)'''
-        entriesBookings = [(1, 0, 0 ,'2023-05-16', '2023-05-17'), (2, 3, 1, '2023-05-16', '2023-05-17'), (3, 0, 2, '2023-05-17', '2023-05-18'),  (4, 1, 0, '2023-05-18', '2023-05-19')]
+        entriesBookings = [(1, 0, 0 ,'2023-05-16 10:00:00', '2023-05-16 11:00:00'), (2, 3, 1, '2023-05-16 11:00:00', '2023-05-16 12:00:00'), (3, 0, 2, '2023-05-17 13:00:00', '2023-05-17 14:00:00'),  (4, 1, 0, '2023-05-18 15:00:00', '2023-05-18 16:00:00')]
 
         for record in entriesBookings:
             cur.execute(queryBookings, record)
@@ -149,7 +149,7 @@ def rooms():
 
 @app.route('/booking_View')
 def bookings():
-    booking = Booking(1, 1, "2021-05-16", "2021-05-17") # Placeholder booking object just to allow us to reference its functions
+    booking = Booking(1, 1, "2021-05-16", "2021-05-17", 1) # Placeholder booking object just to allow us to reference its functions
     data = booking.get_all_bookings()
     
     return render_template('Booking.html', data=data)
@@ -226,16 +226,21 @@ def create_booking():
             endtime = request.form['etime_in']
             cur.execute('select roomid from rooms where roomname = %s', (roomname,))
             roomid = cur.fetchone()[0]
-            booking =  Booking(room_id=roomid, user_id=userid, start_time=starttime, end_time=endtime)
+            booking =  Booking(room_id=roomid, user_id=userid, start_time=starttime, end_time=endtime, attendees=attendees)
             # Add the booking to the database
             
             cur.execute('select max(bookingid) from bookings')
             id = int(cur.fetchone()[0]) + 1
-            booking.createBooking(id)
+            if booking.createBooking(id):
+                connection.commit()
+                cur.close()
+                connection.close()
+                return redirect('/booking_View')
+            else:
+                cur.close()
+                connection.close()
+                return redirect('/room_View')
             
-            # Need to add column for no. of attendees
-            
-            return redirect('/booking_View')
         else:
             return render_template('myBookings.html')
 
