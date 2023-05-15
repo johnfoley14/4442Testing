@@ -2,6 +2,8 @@ import datetime
 from flask import Flask, request, render_template, redirect
 import psycopg2
 
+from Booking import Booking
+
 conn = None
 host = "localhost"
 database = "postgres"
@@ -163,18 +165,14 @@ def rooms():
     cur.execute('select * from rooms') # Get all the rooms from the database
     data.clear() # Clear the data list before adding new data so that it doesn't keep appending
     for row in cur:
-        data.append({"roomid": row[0], "roomname": row[1],
-                    "roomtype": row[2], "capacity": row[3], "location": row[4]})
+        data.append({"roomname": row[2],
+                    "roomtype": row[3], "capacity": row[1], "location": row[4]})
     # Close the cursor and connection
     cur.close()
     connection.close()
     # Pass the data to the template to display in the HTML table
     return render_template('room.html', data=data)
 
-
-@app.route('/about_View')
-def about():
-    return render_template('about.html')
 
 
 @app.route('/booking_View')
@@ -228,6 +226,49 @@ def myBookings():
         connection.close()
         return render_template('myBookings.html', data=data)
 
+
+@app.route('/submit_create_booking', methods=['GET', 'POST'])
+def create_booking():
+    # Here we want to create an instance of the booking class and fill it with the data from the form
+    # Then we want to add that instance to the database
+    # Then we want to redirect to the bookings page
+    global logged_in
+    global logged_in_user_id
+    if logged_in == False:
+        return render_template('noBookings.html') # Change the text to say you need to login to create a booking
+    else:
+        if request.method == 'POST':
+            # Get the data from the form and create a booking object
+            connection = psycopg2.connect(
+                host= host,
+                database= database,
+                user= user,
+                password=password,
+                port = port)
+            cur = connection.cursor()
+            roomname = request.form['name_in']
+            userid = logged_in_user_id
+            attendees = request.form['atts_in']
+            starttime = request.form['stime_in']
+            endtime = request.form['etime_in']
+            cur.execute('select roomid from rooms where roomname = %s', (roomname,))
+            roomid = cur.fetchone()[0]
+            booking =  Booking(room_id=roomid, user_id=userid, start_time=starttime, end_time=endtime)
+            # Add the booking to the database
+            
+            # We want to move this block into the booking class
+            # We can then test this using insert and select commands in the database
+            
+            # Need to add column for no. of attendees
+            cur.execute('select max(bookingid) from bookings')
+            id = int(cur.fetchone()[0]) + 1
+            cur.execute('insert into bookings (bookingid, roomid, userid, starttime, endtime) values (%s, %s, %s, %s, %s)', (id, booking.room_id, booking.user_id, booking.start_time, booking.end_time))
+            connection.commit()
+            cur.close()
+            connection.close()
+            return redirect('/booking_View')
+        else:
+            return render_template('createBooking.html')
 
 @app.route('/Insertion_data', methods=["GET", "POST"])
 def getData():
