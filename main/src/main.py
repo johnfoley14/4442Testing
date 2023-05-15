@@ -22,6 +22,7 @@ logged_in = False
 logged_in_user = None
 logged_in_user_id = None
 error = None
+error2 = None
 
 try:  
     # Note on with clause: if an error occurs inside the withclause, all transactions will rollback, ie not get completed.
@@ -161,33 +162,26 @@ def myBookings():
     global logged_in
     global logged_in_user_id
     data = []
-    if request.method == 'POST':
-        datafromjs = request.form['rowid']
-        print(datafromjs)
-        try:
-            connection = psycopg2.connect(
-                host= host,
-                database= database,
-                user= user,
-                password=password,
-                port = port)
-            cur = connection.cursor()
-            cur.execute('delete from bookings where bookingid = %s', (datafromjs,))
-            connection.commit()
-            cur.close()
-            connection.close()
-        except:
-            print("error")
-        return render_template('myBookings.html', data=data)
-    else:
-        data.clear()
-        connection = psycopg2.connect(
+    connection = psycopg2.connect(
             host= host,
             database= database,
             user= user,
             password=password,
             port = port)
-        cur = connection.cursor()
+    cur = connection.cursor()
+    if request.method == 'POST':
+        datafromjs = request.form['rowid']
+        print(datafromjs)
+        try:
+            cur.execute('delete from bookings where bookingid = %s', (datafromjs,))
+            connection.commit()
+        except:
+            print("error")
+        cur.close()
+        connection.close()
+        return render_template('myBookings.html', data=data)
+    else:
+        data.clear()
         if logged_in == False:
             cur.close()
             connection.close()
@@ -197,6 +191,8 @@ def myBookings():
             for row in cur.fetchall():
                 cur.execute('select roomname from rooms where roomid = %s', (row[1],))
                 data.append({"bookingid": str(row[0]), "roomname":cur.fetchone()[0], "starttime": row[3], "endtime": row[4]})
+            
+            print(logged_in_user_id)
             cur.close()
             connection.close()
             return render_template('myBookings.html', data=data)
@@ -233,14 +229,12 @@ def create_booking():
             
             cur.execute('select max(bookingid) from bookings')
             id = int(cur.fetchone()[0]) + 1
+            connection.commit()
+            cur.close()
+            connection.close()
             if booking.createBooking(id):
-                connection.commit()
-                cur.close()
-                connection.close()
                 return redirect('/booking_View')
             else:
-                cur.close()
-                connection.close()
                 return redirect('/room_View')
             
         else:
@@ -256,6 +250,7 @@ def login():
     global logged_in_user
     global logged_in_user_id
     global error
+    global error2
     corr_password = None
     connection = psycopg2.connect(
         host= host,
@@ -265,7 +260,6 @@ def login():
         port = port)
     cur = connection.cursor()
     if not logged_in:
-        error2 = None
         if request.method == 'POST' and 'Login' in request.form:
             
             print("in login")
@@ -327,8 +321,6 @@ def login():
             logged_in = False
             logged_in_user = None
             return redirect('/')
-            # else:
-            #     error = 'Invalid Credentials. Please try again.'
         return render_template('logged_in.html',user=logged_in_user)
 
 if __name__ == '__main__':
